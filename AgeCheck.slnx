@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/AgeCheck.Core/AgeCheck.Core.csproj" />
+    <Project Path="src/AgeCheck/AgeCheck.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/AgeCheck.Tests/AgeCheck.Tests.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,9 @@
+**/bin/
+**/obj/
+.buildhome/
+.packages/
+artifacts/
+.vs/
+*.user
+*.pfx
+*.p12
