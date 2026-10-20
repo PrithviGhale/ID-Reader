@@ -14,6 +14,8 @@ internal static class Theme
         if (handle == IntPtr.Zero) return;
         int enabled = dark ? 1 : 0;
         _ = DwmSetWindowAttribute(handle, 20, ref enabled, sizeof(int));
+        int rounded=2;
+        _ = DwmSetWindowAttribute(handle, 33, ref rounded, sizeof(int));
     }
     public static void Apply(bool dark, FrameworkElement? surface = null)
     {

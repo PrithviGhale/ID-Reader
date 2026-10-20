@@ -1,45 +1,58 @@
-# AgeCheck 1.0.3 — Scanner fix, light & dark, and a new feel
+# AgeCheck 1.1.0 — Names, history, glowing edges, and a new home
 
-**Already using 1.0.1 or 1.0.2? Open Updates → Check for updates → Download update → Update and restart.**
+**Update inside AgeCheck:** open **☰ → App updates**, check for updates, download, then choose Update and restart. For a fresh install, download **`AgeCheck-win-x64-Setup.exe`** below.
 
-For a fresh install, download **`AgeCheck-win-x64-Setup.exe`** from Assets below.
+## A new home and window
 
-## The scanner fix
+- A redesigned scan screen with a clear result, printed-card dates and a name-copy area.
+- The title area is built into the app, with working minimize, maximize, restore and close controls.
+- Rounded window edges where Windows supports them.
+- A **☰ menu on the left** opens Scan cards, History, Scanner setup and App updates. Click it again to hide the menu.
+- A **settings gear at the top right** opens appearance, motion and history preferences.
+- Smoother fade, slide and zoom transitions, plus an animated menu reveal. Effects finish and stop; reduced-motion settings are respected.
 
-Some keyboard scanners send a flattened barcode beginning with `@ÂNSI`. Version 1.0.2 rejected the accented header before it could recover the dates. This release handles that specific header variation, including its decomposed form and the supported scanner prefix.
+## Clear color signals
 
-Scan on the **Scan** page. If the scanner removed the normal formatting, compare the displayed birth and expiration dates with the printed card, then click **Both dates match the card**. Missing, invalid or conflicting dates still require manual review. Recovered text is a date-only check; it does not prove that the whole barcode arrived.
+- **Green edges:** the birth date indicates age 21 or older and the date/field checks pass.
+- **Red edges:** under 21 or expired.
+- **Orange edges:** incomplete, conflicting or unusual data needs manual review.
 
-## A fresh interface
+Text explains the result too. Orange does not mean “fake,” and green does not verify authenticity. Recovered scanner text still requires printed-date confirmation before a passing date result.
 
-- New graphite-and-mint dark mode and a clean light mode.
-- A **Settings** page that saves your appearance and motion choices.
-- Clear scan, setup, update and settings pages with readable text and flexible layouts.
-- Theme-aware results, buttons and scrollbars.
-- A brief opening reveal and gentle fade-and-slide page changes.
-- An animation switch, plus respect for the Windows animation preference.
-- Animations finish and settle; there are no constantly running effects.
+## Names and rewards sign-ups
 
-## Tested with made-up IDs
+Readable first and last names appear in **ALL CAPS**. Click **Copy name** to paste into your rewards form. Middle names are excluded. Missing, shortened or ambiguous names are shown as unavailable instead of guessed. Compare the name with the physical card first.
 
-- **89 automated parser tests**, including the reported header pattern, US/Canadian dates, missing separators, control substitutions, duplicates and truncated scans.
-- A WPF input test that sends the synthetic accented-header scan through the app's text-input handler, displays the dates and confirms the result.
-- Theme switching, preference saving, legacy settings, text contrast and privacy clearing.
-- Opening, tab transitions, rapid tab changes and reduced motion.
-- **180 layout cases** across ten small/large viewport sizes in both themes.
+**No Next customer click is needed.** Scan another card on the Scan cards page and it replaces the previous result automatically. Clear result remains available if you want to clear manually.
 
-Physical Honeywell scanner testing, physical mixed-monitor testing and a full installed-version update test remain outstanding. The installer is unsigned, so Windows may show an unknown-publisher warning.
+## New: session history
 
-## Download guide
+History keeps up to **100 first/last names, scan times and results in memory** so you can see who you scanned during this app session. Confirming recovered dates updates the same row. Demo entries are clearly marked.
 
-| File | Use |
-| --- | --- |
-| **AgeCheck-win-x64-Setup.exe** | Recommended installer, with in-app updates. |
-| AgeCheck-win-x64-Portable.zip | Try without installing; no in-app updates. |
-| `.nupkg` and `.json` files | Used by the updater; you do not need to open these. |
+- History is on by default in this version.
+- **Clear history** removes it immediately.
+- Turning history off in Settings also clears it.
+- Closing AgeCheck clears the session; history is not saved to disk or restored after restart.
+- History does not keep birth dates, expiration dates, addresses, ID numbers, images or raw barcodes.
+- Copying a name exports it to your Windows clipboard, where it may remain after the app closes and follows your clipboard settings.
 
-Windows x64 is required. Version 1.0.0 users still need the one-time uninstall/reinstall because the app identity changed in 1.0.1.
+Current results still clear after 30 seconds, on the next scan and when the window loses focus. The session history is separate and remains until cleared or the app closes.
+
+## Extra barcode checks and fixes
+
+- Checks optional revision dates against issue dates and validates supported field-code values and name flags.
+- Does not treat a non-REAL-ID compliance flag as evidence of a fake.
+- Fixes a malformed-name case where following field codes could otherwise be mistaken for a name.
+- Reduces repeated field-counting work and history allocations; the history list is bounded and virtualized.
+
+These are checks that work with your current barcode scanner. No camera, UV/infrared device, government lookup or document-verification service has been added.
+
+## Testing and limits
+
+**109 core tests and 220 layout cases passed.** The self-contained app also passed scanner/UI and animation checks. Tests use synthetic IDs only and cover names, extra field checks, history limits/clearing, automatic next-scan replacement, clipboard contents through a test writer, color states, window controls and both themes.
+
+The installer is unsigned. Physical Honeywell scanner testing, physical mixed-monitor testing and a full installed-version update test remain outstanding.
 
 **ID authenticity not verified.** Compare the printed card, photograph and customer. A barcode result does not approve a sale.
 
-[Scanner setup](https://github.com/PrithviGhale/ID-Reader/blob/main/docs/SCANNER_SETUP.md) · [Research and references](https://github.com/PrithviGhale/ID-Reader/blob/main/docs/SCANNER_RESEARCH.md) · [Test details](https://github.com/PrithviGhale/ID-Reader/blob/main/docs/VALIDATION.md)
+[Setup](https://github.com/PrithviGhale/ID-Reader/blob/main/docs/SCANNER_SETUP.md) · [Validation](https://github.com/PrithviGhale/ID-Reader/blob/main/docs/VALIDATION.md) · [Privacy and technical details](https://github.com/PrithviGhale/ID-Reader/blob/main/docs/TECHNICAL.md)

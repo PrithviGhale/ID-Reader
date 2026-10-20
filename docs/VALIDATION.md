@@ -1,5 +1,17 @@
 # Validation record
 
+## Version 1.1.0 names, history and integrated window
+
+- **109 core tests passed.** Added first/last-name extraction, all-caps normalization, truncation/malformed-name protection, optional revision/field-code checks and history replacement/capacity/clearing. A malformed flattened-name test exposed a field-code-as-name bug; the recovery boundary logic was tightened.
+- The self-contained WPF app passed its self-test for automatic second-scan replacement without a Next button, first/last-only clipboard output through a test writer, history updates without duplicate confirmation rows, demo labeling, history disabling/clearing and the saved preference. Scanner tests wait for completion with a bounded timeout instead of assuming background work always finishes within one second; the app's 700 ms quiet-period timer is unchanged.
+- Exactly-21 green, under-21 red, expired red and review-orange window-edge targets are checked.
+- Integrated WindowChrome, maximize and restore controls are exercised; the restored frame returns to rounded corners.
+- Opening/page zoom/slide transitions, rapid tab changes, drawer reveal/close and reduced-motion cancellation passed the motion checks.
+- **220 layout cases passed** across both themes and ten logical viewport sizes, including names, history, open navigation, settings and all result states. Small-screen and desktop renders were visually inspected.
+- History contains only names, timestamps, result categories and demo/confirmation flags, is capped at 100, and has no file persistence. Developer tests never write real ID data or overwrite the user's clipboard.
+- The final packaged app's short post-test idle sample used **15.6 ms CPU over five seconds** and **214.7 MiB working set** on this machine. This is a short measurement, not a performance guarantee. There are no continuous app animations or history polling loops.
+- Physical scanner, physical mixed-monitor and full installed-version update testing remain unverified. Native drag/resize and OS-dependent corner appearance should also be checked on deployment machines.
+
 ## Version 1.0.3 accented header, themes and motion
 
 - **89 automated parser tests passed.** Added the reported accented-header structure using unrelated synthetic values, decomposed accents, supported prefixes, country-specific dates/suffixes, malformed and repeated fields, unsupported header mutations and prevention of broad transliteration.

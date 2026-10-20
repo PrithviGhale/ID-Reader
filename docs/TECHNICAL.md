@@ -2,16 +2,29 @@
 
 ## Privacy and performance
 
-- ID processing is local and works offline. The app does not save scan history, raw barcodes, names, addresses, license numbers or images.
-- Input and results clear after 30 seconds, on the next scan, when changing pages, and when the app loses focus.
-- Only non-sensitive preferences (startup update checks, light/dark appearance and motion) are stored in `%LOCALAPPDATA%\AgeCheck\settings.json`.
+- ID processing is local and works offline. Raw barcodes, addresses, license numbers and images are not saved. A bounded session history holds only first/last names, scan times, demo/confirmation flags and result categories in memory; it is never written to disk.
+- Current input and results clear after 30 seconds, on the next scan, when changing pages, and when the app loses focus. Session history intentionally remains until explicitly cleared, disabled or the app closes.
+- Only non-sensitive preferences (startup update checks, light/dark appearance, motion and the history-enabled switch) are stored in `%LOCALAPPDATA%\AgeCheck\settings.json`.
+- Copy name is an explicit clipboard action. Copied names can persist outside the app and follow Windows clipboard settings; they are not cleared on focus loss so they can be pasted into a rewards form.
 - No analytics or application crash reporting. Update requests contain no scanned ID data. GitHub receives ordinary network metadata when checking/downloading updates.
 - No browser engine, global keyboard hook, background service or continuous animation. Input and one-shot timers drive the interface; all scan timers stop when idle.
-- Page/result transitions last 260 ms; the opening reveal lasts 460 ms. They respect the app's motion switch and Windows animation preference, use opacity/translation, and stop at their base values.
+- Page/result transitions last 340 ms; the opening reveal lasts 520 ms. They respect the motion switch and Windows preference, use opacity/translation/scale, and stop at their base values. The drawer and edge-color transitions are finite too.
 
 Clearing removes application references and visible data; .NET garbage collection and Windows memory management do not provide a guarantee of immediate secure memory erasure. Avoid collecting process dumps while real IDs are in use.
 
 ## Supported barcode subset
+
+### Names, checks and history in 1.1.0
+
+Strict fields use DAC/DCS for first/last names, with DDE/DDF truncation flags respected when present. Flattened recovery requires unambiguous standard field boundaries and rejects field-code fragments masquerading as a name. Names are normalized to uppercase and exclude DAD middle names. Missing, truncated or ambiguous values are not copied as complete names.
+
+Optional card revision dates are checked for validity and consistency with issue dates; optional sex/compliance/truncation code values are checked against their supported enumerations. These are inconsistency checks, not authentication. A compliance value of N does not imply a fake.
+
+`SessionHistory` caps entries at 100, updates confirmation by an app-generated scan ID without creating duplicate rows, and immediately clears when disabled. It has no persistence code. History UI uses a virtualized list. Developer clipboard tests replace the clipboard writer and do not overwrite the user's real clipboard.
+
+### Window shell
+
+WPF WindowChrome provides an integrated caption and resize border without a transparent layered window. Custom minimize/maximize/restore/close controls remain in the app header. DWM rounded corners are requested where supported; maximized frames are square. The left drawer overlays the page and pauses scanner capture while open. Status edges use finite brush-color transitions and a thin translucent border instead of a whole-window blur effect.
 
 ### Header recovery in 1.0.3
 

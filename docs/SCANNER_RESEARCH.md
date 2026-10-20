@@ -1,6 +1,6 @@
 # Scanner compatibility notes
 
-Reviewed October 19, 2026. Tests and screenshots use synthetic IDs only.
+Reviewed October 19–20, 2026. Tests and screenshots use synthetic IDs only.
 
 ## References
 
@@ -9,6 +9,7 @@ Reviewed October 19, 2026. Tests and screenshots use synthetic IDs only.
 - [Honeywell Xenon XP 1950g product documentation](https://automation.honeywell.com/us/en/products/productivity-solutions/barcode-scanners/general-purpose-handheld/xenon-xp-1950g-general-duty-scanner): use the user guide for the exact hardware/firmware. The linked current user-guide download required additional access during development.
 - [Microsoft WPF dynamic resources](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/systems/xaml-resources-overview): resource updates used to switch theme brushes without rebuilding the window.
 - [Microsoft WPF animation guidance](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/graphics-multimedia/animation-tips-and-tricks) and [Windows animation preference](https://learn.microsoft.com/en-us/dotnet/api/system.windows.systemparameters.clientareaanimation): short, finite animations that return to their base values and respect reduced-motion preferences.
+- [Microsoft WindowChrome](https://learn.microsoft.com/en-us/dotnet/api/system.windows.shell.windowchrome?view=windowsdesktop-10.0): extending the app interface into the caption while retaining native window behavior.
 
 ## The reported header variation
 
@@ -19,6 +20,8 @@ Version 1.0.3 recognizes only the specific `@ÂNSI ` and decomposed `@A\u0302NSI
 Because separators have been lost, original lengths/field boundaries cannot establish complete-frame validity. Recovered dates therefore still require a comparison with the printed card and explicit confirmation. Invalid, duplicate, conflicting or missing required values remain blocked. Strict mode does not apply this repair.
 
 ## Synthetic tests
+
+Version 1.1.0 also uses the standard DAC/DCS first/family-name fields and respects DDE/DDF truncation flags when present. Flattened names need unambiguous boundaries; ambiguous values remain unavailable. Optional DDB revision dates and DBC/DDA/name-flag values add consistency checks. None of these establishes authenticity or turns a non-REAL-ID document into a fake-ID finding.
 
 The fixtures use the same structural pattern (fixed header, directory, DAQ/DCS/name flags, birth/issue/expiration, USA/CAN and trailing card fields), with unrelated made-up values. They cover composed/decomposed accents, plain headers, missing headers, control substitutions, suffixes, duplicate fields, malformed and truncated dates, conflicting date orders, concatenated scans and unsupported mutations.
 

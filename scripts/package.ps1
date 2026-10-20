@@ -5,9 +5,9 @@ $config = Get-Content release-config.json -Raw | ConvertFrom-Json
 function Check-Exit { if ($LASTEXITCODE -ne 0) { throw "Build command failed ($LASTEXITCODE)." } }
 dotnet tool restore
 Check-Exit
-dotnet test AgeCheck.slnx -c Release
+dotnet test AgeCheck.slnx -c Release -p:UseSharedCompilation=false -nodeReuse:false -m:1
 Check-Exit
-dotnet publish src/AgeCheck/AgeCheck.csproj -c Release -r $config.runtime --self-contained true -p:Version=$Version -o artifacts/publish
+dotnet publish src/AgeCheck/AgeCheck.csproj -c Release -r $config.runtime --self-contained true -p:Version=$Version -p:UseSharedCompilation=false -nodeReuse:false -o artifacts/publish
 Check-Exit
 $packArgs = @('pack', '--packId', $config.packId, '--packTitle', 'AgeCheck', '--packAuthors', 'AgeCheck', '--packVersion', $Version, '--packDir', 'artifacts/publish', '--mainExe', 'AgeCheck.exe', '--channel', $config.channel, '--runtime', $config.runtime, '--outputDir', 'artifacts/releases', '--releaseNotes', 'RELEASE_NOTES.md')
 if ($SigningMetadata) { $packArgs += @('--azureTrustedSignFile', $SigningMetadata) }

@@ -25,7 +25,9 @@ A simple Windows app for checking the birth date and expiration date in an ID ba
 | **Clear results** | Large text shows 21+, Under 21, Expired, or Manual review. |
 | **Date comparison** | Shows the birth date and expiration date so you can compare them with the card. |
 | **Scanner text recovery** | Can recover dates from supported scans with missing headers or line breaks, then asks you to confirm the printed dates. |
-| **Private by default** | Processes scans on your PC. Does not save scan history or ID details. |
+| **Uppercase names** | Shows a readable first and last name in ALL CAPS, with a copy button for your rewards form. |
+| **Session history** | Keeps up to 100 names, times and results in memory until you close the app. Clear it anytime or turn it off. |
+| **Local processing** | Does not write scan history, raw barcodes or ID details to disk. Copying a name puts it on your Windows clipboard. |
 | **Automatic clearing** | Clears results after 30 seconds, on the next scan, or when you leave the window. |
 | **Works offline** | No internet is needed to check a scan. |
 | **Built-in updates** | Check for updates, read what's new, download, and restart when you choose. |
@@ -33,6 +35,8 @@ A simple Windows app for checking the birth date and expiration date in an ID ba
 | **Light and dark modes** | Choose your preferred look in Settings. Your choice stays on this PC. |
 | **Opening and page animations** | A short opening reveal and smooth page changes, with a setting to turn them off. |
 | **Flexible layout** | Adjusts to small windows, laptops, large monitors, and Windows display scaling. Scroll to reach extra content on small screens. |
+| **Color-changing edges** | Green for 21+, red for under 21 or expired, and orange for manual review. Text explains each result too. |
+| **Collapsible menu** | Open the left menu with ☰. Settings are behind the gear at the top right. |
 | **Demo mode** | Try made-up examples without scanning an ID. Each demo is clearly marked. |
 
 ## Get started
@@ -40,10 +44,10 @@ A simple Windows app for checking the birth date and expiration date in an ID ba
 1. **[Open the latest release](https://github.com/PrithviGhale/ID-Reader/releases/latest)** and download **`AgeCheck-win-x64-Setup.exe`**.
 2. Run the installer. Everything the app needs is included.
 3. Follow the **[scanner setup guide](docs/SCANNER_SETUP.md)**.
-4. Open **Scan an ID**, keep the window active, and scan the barcode on the back of the card.
-5. Compare the result with the printed card and the customer. Use **Clear / Next customer** when finished.
+4. Open **☰ → Scan cards**, keep the window active, and scan the barcode on the back of the card.
+5. Compare the result with the printed card and the customer. **Just scan the next card** for the next customer; no Next button is needed. Clear result is optional.
 
-**Already using version 1.0.0?** Close and uninstall that version, then install the latest AgeCheck Setup. This one-time reinstall removes the old publisher and installation name. Future releases use the new AgeCheck identity. Your scan history does not need moving because the app does not save any.
+**Already using version 1.0.0?** Close and uninstall that version, then install the latest AgeCheck Setup. This one-time reinstall removes the old publisher and installation name. Versions 1.0.1 and newer can update inside the app. Session history is never migrated or saved across restarts.
 
 ## What you need
 
@@ -68,7 +72,7 @@ This is a **date-only check**. Missing separators mean the app cannot prove the 
 
 ## Light or dark. Your choice.
 
-Open **Settings** and choose **Light** or **Dark**. You can also turn animations off. Preferences save automatically. The opening reveal and page transitions finish in under half a second and respect the Windows animation setting.
+Open the **gear at the top right** and choose **Light** or **Dark**. You can also turn animations or session history off. Preferences save automatically. Opening and page changes use brief zoom-and-slide animations and respect the Windows animation setting.
 
 ![AgeCheck in light mode](docs/images/light.png)
 
@@ -83,11 +87,32 @@ Open **Settings** and choose **Light** or **Dark**. You can also turn animations
 
 **ID authenticity not verified.** The app checks dates in the barcode. It cannot prove the card is real or approve a sale. Always compare the printed details, photograph, and customer.
 
+Extra barcode checks flag conflicting revision/issue dates, unknown field codes and invalid name flags. An orange edge means **manual review**, not proof of a fake. A non-REAL-ID compliance flag is not treated as a fake-ID indicator.
+
+## Names and history
+
+Names come from supported first/last-name fields; middle names are excluded. Shortened, missing or ambiguous names are shown as unavailable rather than guessed. Compare the printed name before copying it.
+
+Open **☰ → History** to see names, scan times and results from this app session. Recovered-date confirmation updates the same entry. Demo entries are marked DEMO. History is capped at 100 entries, has a Clear history button, and can be switched off in Settings; switching it off also clears it.
+
+Current scan results still clear after 30 seconds, on the next scan and when the app loses focus. History names remain in memory until cleared or the app closes. No history files are created. A copied name can remain on the Windows clipboard after the app closes and follows your Windows clipboard settings.
+
+<details>
+<summary>See the new scan result, history and menu</summary>
+
+![A synthetic 21+ result with green window edges and uppercase name copying](docs/images/passed.png)
+
+![Session history showing clearly marked synthetic scans](docs/images/history.png)
+
+![The collapsible left navigation](docs/images/menu.png)
+
+</details>
+
 The current installer is **unsigned**, so Windows may show an unknown-publisher warning. Physical scanner testing and a full installed-app update test are still outstanding. See the **[test results and limits](docs/VALIDATION.md)**.
 
 ## Updates, without rushing you
 
-Open **App updates** to check for a new version. Read the release notes, download it, and choose **Update and restart** when ready. You can turn off startup checks or postpone the update. Scanning still works if the internet is unavailable.
+Open **☰ → App updates** to check for a new version. Read the release notes, download it, and choose **Update and restart** when ready. You can turn off startup checks or postpone the update. Scanning still works if the internet is unavailable.
 
 ## For developers
 

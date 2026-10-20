@@ -4,7 +4,11 @@ using System.Text.RegularExpressions;
 namespace AgeCheck.Core;
 
 public enum Outcome { Passed, Under21, Expired, Review }
-public sealed record CheckResult(Outcome Outcome, string Detail, DateOnly? Birth = null, DateOnly? Expiration = null, bool NeedsDateConfirmation = false);
+public sealed record CheckResult(Outcome Outcome, string Detail, DateOnly? Birth = null, DateOnly? Expiration = null, bool NeedsDateConfirmation = false,
+    string? FirstName = null, string? LastName = null, string? NameNote = null)
+{
+    public string? DisplayName => FirstName != null && LastName != null ? FirstName + " " + LastName : null;
+}
 
 public static partial class Barcode
 {
@@ -76,13 +80,23 @@ public static partial class Barcode
             return Bad("Missing or invalid birth, expiration or issue date. Manual review required.");
         if (birth > today || issued > today || issued < birth || expiry < issued || birth < today.AddYears(-125))
             return new(Outcome.Review, "Dates are inconsistent. Compare the printed card and review manually.", birth, expiry);
+        var name = ReadName(fields);
+        CheckResult Finish(CheckResult r) => r with { FirstName = name.First, LastName = name.Last, NameNote = name.Note };
+        if (fields.ContainsKey("DDB") && (!Date("DDB", out var revised) || revised > issued))
+            return Finish(new(Outcome.Review, "Card revision date is invalid or later than the issue date. Compare the printed card and review manually.", birth, expiry));
+        if (fields.TryGetValue("DBC", out var sex) && sex is not ("1" or "2" or "9"))
+            return Finish(new(Outcome.Review, "Unsupported barcode field code. Review the printed card manually.", birth, expiry));
+        if (fields.TryGetValue("DDA", out var compliance) && compliance is not ("F" or "N"))
+            return Finish(new(Outcome.Review, "Unrecognized compliance field. Review the card manually; this does not prove it is fake.", birth, expiry));
+        if (new[] { "DDE", "DDF", "DDG" }.Any(k => fields.TryGetValue(k,out var value) && value is not ("N" or "T" or "U")))
+            return Finish(new(Outcome.Review, "Invalid name truncation flags. Review the printed card manually.", birth, expiry));
         foreach (var (key, years) in new[] { ("DDH", 18), ("DDI", 19), ("DDJ", 21) })
         {
             if (!fields.ContainsKey(key)) continue;
             if (!Date(key, out var encoded) || encoded != birth.AddYears(years))
-                return new(Outcome.Review, "Encoded age-threshold date conflicts with the birth date or needs local policy review.", birth, expiry);
+                return Finish(new(Outcome.Review, "Encoded age-threshold date conflicts with the birth date or needs local policy review.", birth, expiry));
         }
-        return Evaluate(birth, expiry, today);
+        return Finish(Evaluate(birth, expiry, today));
     }
 
     private static CheckResult RecoverScannerDates(string text, DateOnly today)
@@ -98,24 +112,58 @@ public static partial class Barcode
         if (text.Any(c => char.IsControl(c) && c is not ('\r' or '\n'))) return Bad("Unexpected scanner control characters. Rescan or check manually.");
         text = text.Replace("\r", "").Replace("\n", "");
         var recovered = new Dictionary<string, string>();
-        foreach (var key in new[] { "DCG", "DBB", "DBA", "DBD", "DDH", "DDI", "DDJ" })
+        foreach (var key in new[] { "DCG", "DBB", "DBA", "DBD", "DDH", "DDI", "DDJ", "DDB", "DBC", "DDA", "DDE", "DDF", "DDG" })
         {
-            int occurrences = Regex.Matches(text, key, RegexOptions.CultureInvariant).Count;
+            int occurrences = Occurrences(text,key);
             bool required = key is "DCG" or "DBB" or "DBA" or "DBD";
             if (!required && occurrences == 0) continue;
             if (occurrences != 1) return Bad("Missing or repeated date/country fields. Scan again or review the card manually.");
-            string valuePattern = key == "DCG" ? "USA|CAN" : "[0-9]{8}";
+            string valuePattern = key switch { "DCG" => "USA|CAN", "DBC" or "DDA" or "DDE" or "DDF" or "DDG" => "[A-Z0-9]", _ => "[0-9]{8}" };
             var match = Regex.Match(text, key + "(" + valuePattern + @")(?=D[A-Z]{2}|Z[A-Z]{2}|$)", RegexOptions.CultureInvariant);
             if (!match.Success) return Bad("A date or country field is incomplete or ambiguous. Scan again or review manually.");
             recovered[key] = match.Groups[1].Value;
         }
+        var recoveredNames = RecoverNameFields(text);
+        foreach (var (key,value) in recoveredNames) recovered[key] = value;
         // Reuse all strict calendar, consistency and optional threshold checks.
         string body = "DL" + string.Join('\n', recovered.Select(p => p.Key + p.Value)) + "\r";
         var result = Check($"@\n\u001e\rANSI 636000100001DL0031{body.Length:D4}{body}", today);
         if (result.Outcome == Outcome.Review) return result;
-        return new(Outcome.Review,
-            "Dates recovered from scanner text. The header or separators are missing, so scan completeness cannot be verified. Compare both dates with the printed card, then confirm below.",
-            result.Birth, result.Expiration, true);
+        return result with { Outcome = Outcome.Review, NeedsDateConfirmation = true,
+            Detail = "Dates recovered from scanner text. Formatting is incomplete, so full barcode checks are unavailable. Compare both dates with the printed card, then confirm below." };
+    }
+
+    private static (string? First,string? Last,string? Note) ReadName(Dictionary<string,string> fields)
+    {
+        if (!fields.TryGetValue("DAC",out var first) || !fields.TryGetValue("DCS",out var last)) return (null,null,"Name not available in this scan.");
+        if (new[]{"DDE","DDF"}.Any(k => fields.TryGetValue(k,out var flag) && flag != "N")) return (null,null,"Name may be shortened. Compare the printed card.");
+        string? Clean(string value)
+        {
+            value = Regex.Replace(value.Trim(), " +", " ").ToUpperInvariant();
+            return value is not ("NONE" or "UNAVL") && Regex.IsMatch(value,@"^[A-Z][A-Z '\-]{0,79}$",RegexOptions.CultureInvariant) ? value : null;
+        }
+        var f=Clean(first); var l=Clean(last);
+        return f != null && l != null ? (f,l,null) : (null,null,"Name could not be read safely. Compare the printed card.");
+    }
+    private static Dictionary<string,string> RecoverNameFields(string text)
+    {
+        var names = new Dictionary<string,string>();
+        if (text.StartsWith("CS",StringComparison.Ordinal)) text="D"+text;
+        // With lost separators, require unambiguous standard name/flag boundaries.
+        foreach(var (key,next) in new[]{("DCS",@"DDE[NTU]DAC|DAC"),("DAC",@"DDF[NTU](?:DAD|DBD|DBB|DBA|DCA)|DAD|DBD|DBB|DBA|DCA")})
+        {
+            if (Occurrences(text,key) != 1) return new();
+            var m=Regex.Match(text,key+@"((?:(?!D[A-Z]{2}|Z[A-Z]{2})[A-Za-z '\-]){1,80})(?="+next+")",RegexOptions.CultureInvariant);
+            if (!m.Success) return new();
+            names[key]=m.Groups[1].Value;
+        }
+        return names;
+    }
+    private static int Occurrences(string text,string key)
+    {
+        int count=0,offset=0;
+        while((offset=text.IndexOf(key,offset,StringComparison.Ordinal))>=0) { count++; offset++; }
+        return count;
     }
 
     public static CheckResult Evaluate(DateOnly birth, DateOnly expiry, DateOnly today)
