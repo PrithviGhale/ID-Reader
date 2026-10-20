@@ -16,6 +16,10 @@
     <UseWPF>true</UseWPF>
     <StartupObject>AgeCheck.App</StartupObject>
     <ApplicationIcon>Assets/AgeCheck.ico</ApplicationIcon>
+    <Company>AgeCheck</Company>
+    <Authors>AgeCheck</Authors>
+    <Product>AgeCheck</Product>
+    <Copyright>Copyright © 2026 AgeCheck contributors</Copyright>
   </PropertyGroup>
   <ItemGroup>
     <ApplicationDefinition Remove="App.xaml" />

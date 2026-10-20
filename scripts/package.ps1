@@ -9,7 +9,7 @@ dotnet test AgeCheck.slnx -c Release
 Check-Exit
 dotnet publish src/AgeCheck/AgeCheck.csproj -c Release -r $config.runtime --self-contained true -p:Version=$Version -o artifacts/publish
 Check-Exit
-$packArgs = @('pack', '--packId', $config.packId, '--packTitle', 'AgeCheck', '--packAuthors', 'Prithvi Ghale', '--packVersion', $Version, '--packDir', 'artifacts/publish', '--mainExe', 'AgeCheck.exe', '--channel', $config.channel, '--runtime', $config.runtime, '--outputDir', 'artifacts/releases', '--releaseNotes', 'RELEASE_NOTES.md')
+$packArgs = @('pack', '--packId', $config.packId, '--packTitle', 'AgeCheck', '--packAuthors', 'AgeCheck', '--packVersion', $Version, '--packDir', 'artifacts/publish', '--mainExe', 'AgeCheck.exe', '--channel', $config.channel, '--runtime', $config.runtime, '--outputDir', 'artifacts/releases', '--releaseNotes', 'RELEASE_NOTES.md')
 if ($SigningMetadata) { $packArgs += @('--azureTrustedSignFile', $SigningMetadata) }
 $packArgs += @('--icon', 'src/AgeCheck/Assets/AgeCheck.ico')
 dotnet vpk @packArgs

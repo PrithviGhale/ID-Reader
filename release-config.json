@@ -1,6 +1,6 @@
 {
   "repositoryUrl": "https://github.com/PrithviGhale/ID-Reader",
-  "packId": "PrithviGhale.AgeCheck",
-  "channel": "win",
+  "packId": "AgeCheck",
+  "channel": "win-x64",
   "runtime": "win-x64"
 }

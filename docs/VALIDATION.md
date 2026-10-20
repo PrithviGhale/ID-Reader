@@ -1,5 +1,11 @@
 # Validation record
 
+## Version 1.0.1 branding update
+
+All 46 core tests passed again. The self-contained application and installer were rebuilt with `AgeCheck` as the product, company, package ID and package author. The new update channel is `win-x64`; users of 1.0.0 need a one-time reinstall. No scan-checking logic changed in this release.
+
+## Initial release
+
 Initial validation: October 19, 2026, Windows x64 with .NET SDK 10.0.302.
 
 - Release build: zero warnings and errors.

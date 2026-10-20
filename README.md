@@ -1,95 +1,78 @@
+<div align="center">
+
 # AgeCheck
 
-**A focused, private age-checking app for the Windows counter.**
+### Scan an ID. Check the age. Keep it private.
 
-Scan an ID barcode, see whether its birth date indicates an age of at least 21, and check its expiration date. Built with C# / .NET 10 LTS and native WPF, with a calm interface, large text and brief transitions.
+A simple Windows app for checking the birth date and expiration date in an ID barcode.
 
-[Download the latest release](https://github.com/PrithviGhale/ID-Reader/releases/latest) · [Scanner setup](docs/SCANNER_SETUP.md) · [Build and publish](docs/RELEASING.md)
+![Windows x64](https://img.shields.io/badge/Windows-x64-176B53?style=flat-square)
+![Works offline](https://img.shields.io/badge/Scanning-works_offline-176B53?style=flat-square)
+![MIT license](https://img.shields.io/badge/License-MIT-176B53?style=flat-square)
 
-![AgeCheck ready screen](docs/images/ready.png)
+**[Download AgeCheck](https://github.com/PrithviGhale/ID-Reader/releases/latest)** · **[Scanner setup](docs/SCANNER_SETUP.md)** · **[What's new](https://github.com/PrithviGhale/ID-Reader/releases)**
 
-## Install
+</div>
 
-1. Open **Releases** and download `PrithviGhale.AgeCheck-win-Setup.exe`.
-2. Run the installer on Windows x64. The .NET runtime is included; no developer tools are needed.
-3. Configure your Honeywell Xenon XP 1950g as described in the [setup guide](docs/SCANNER_SETUP.md).
-4. Open **Scan an ID**, keep AgeCheck focused, and scan the PDF417 barcode on the back of the card.
+![AgeCheck app showing the Ready to scan screen](docs/images/ready.png)
 
-The first release is **unsigned**. Windows may warn about an unknown publisher. This is a working packaged build, not a code-signed release. Verify the download source and follow your organization's software policy.
+## What it does
 
-## What you see
-
-| Result | Meaning |
+| Feature | How it helps |
 | --- | --- |
-| **21 or older — barcode age check passed** | The encoded birth date meets the age threshold and the encoded expiration date has not passed. |
-| **Under 21** | The encoded birth date is below the threshold. |
-| **Expired** | The encoded expiration date is before today, regardless of age. |
-| **Unable to check — manual review required** | Data is incomplete, unsupported, malformed, ambiguous or inconsistent. |
+| **21+ age check** | Checks whether the barcode birth date says the person is at least 21. |
+| **Expiration check** | Shows when the ID's barcode expiration date has passed. |
+| **Clear results** | Large text shows 21+, Under 21, Expired, or Manual review. |
+| **Date comparison** | Shows the birth date and expiration date so you can compare them with the card. |
+| **Private by default** | Processes scans on your PC. Does not save scan history or ID details. |
+| **Automatic clearing** | Clears results after 30 seconds, on the next scan, or when you leave the window. |
+| **Works offline** | No internet is needed to check a scan. |
+| **Built-in updates** | Check for updates, read what's new, download, and restart when you choose. |
+| **Simple, smooth design** | A clean Windows interface with short animations and no constantly running effects. |
+| **Demo mode** | Try made-up examples without scanning an ID. Each demo is clearly marked. |
 
-**ID authenticity not verified.** A counterfeit can contain a correctly formatted barcode. Always compare the printed details, photograph and customer. AgeCheck does not inspect holograms or ultraviolet features, query government records, check revocations, or authorize a sale.
+## Get started
 
-Use **Clear / Next customer** or Escape between customers. Synthetic examples are available inside the app and every demo result displays **DEMO**.
+1. **[Open the latest release](https://github.com/PrithviGhale/ID-Reader/releases/latest)** and download **`AgeCheck-win-x64-Setup.exe`**.
+2. Run the installer. Everything the app needs is included.
+3. Follow the **[scanner setup guide](docs/SCANNER_SETUP.md)**.
+4. Open **Scan an ID**, keep the window active, and scan the barcode on the back of the card.
+5. Compare the result with the printed card and the customer. Use **Clear / Next customer** when finished.
 
-## Privacy and performance
+**Already using version 1.0.0?** Close and uninstall that version, then install the latest AgeCheck Setup. This one-time reinstall removes the old publisher and installation name. Future releases use the new AgeCheck identity. Your scan history does not need moving because the app does not save any.
 
-- ID processing is local and works offline. No scan history, raw barcode files, names, addresses, license numbers or images are saved by the app.
-- Results and input clear after 30 seconds, on the next scan, and when the window loses focus. Changing pages also clears them.
-- Only the startup-update preference is stored in `%LOCALAPPDATA%\AgeCheck\settings.json`.
-- No analytics or application crash reporting. Update requests contain no scanned ID data. GitHub receives ordinary network metadata when checking/downloading updates.
-- No browser engine, global keyboard hook, background service or continuous animation. Input and one-shot timers drive the interface; all scan timers stop when idle.
-- Transitions last 180 ms and respect Windows animation preferences; software-rendered sessions skip them.
+## What you need
 
-Clearing removes application references and visible data; .NET garbage collection and Windows memory management do not provide a guarantee of immediate secure memory erasure. Avoid collecting process dumps while real IDs are in use.
+- A Windows x64 PC.
+- A scanner that can read PDF417 barcodes and type them into Windows.
+- The setup guide is written for the **Honeywell Xenon XP 1950g**. Physical testing with that scanner is still needed.
 
-## Supported barcode subset
+AgeCheck supports selected US and Canadian AAMVA barcode formats, versions 08–10. Unsupported, incomplete, or conflicting data asks for manual review. It does not support every ID format.
 
-AgeCheck validates AAMVA `ANSI ` headers, version **08, 09 or 10**, subfile offsets/lengths and exactly one `DL` or `ID` subfile. `DCG`, `DBB`, `DBA` and `DBD` are required for country, birth, expiration and issue dates. Duplicate fields, overlapping subfiles, missing data, invalid dates and unexpected trailing content require review. It is an age/date checker, not a validator of every mandatory AAMVA identity field.
+## Know what the result means
 
-Dates are explicitly `MMddyyyy` for `USA` and `yyyyMMdd` for `CAN`; the app never guesses a country. Dates use the PC's local calendar date, so keep the system clock correct. The expiration date is treated as valid through that day. A February 29 birthday reaches 21 on March 1 in a non-leap year; February 28 in that boundary year always requires manual review because jurisdiction-specific policy can differ. Expiration takes priority in the displayed outcome.
+**ID authenticity not verified.** The app checks dates in the barcode. It cannot prove the card is real or approve a sale. Always compare the printed details, photograph, and customer.
 
-The capture limit is 16,384 characters and 20 seconds. After 700 ms without input, the app validates the **whole frame**; an embedded newline does not submit a scan. A scan beep is not proof that every character arrived. Unsupported versions (including newer formats), modified scanner output and non-AAMVA documents require manual review.
+The current installer is **unsigned**, so Windows may show an unknown-publisher warning. Physical scanner testing and a full installed-app update test are still outstanding. See the **[test results and limits](docs/VALIDATION.md)**.
 
-## Updates
+## Updates, without rushing you
 
-Open **App updates** to check for stable releases, read release notes, download an update, then choose **Update and restart**. You can return to scanning and postpone restart. Startup checks can be disabled. Failed checks/downloads leave offline checking available.
+Open **App updates** to check for a new version. Read the release notes, download it, and choose **Update and restart** when ready. You can turn off startup checks or postpone the update. Scanning still works if the internet is unavailable.
 
-Updates use Velopack's `GithubSource` and package verification, over HTTPS, from this public repository. No tokens are embedded. Development and portable copies explain that the Setup installer is required for in-app updates.
+## For developers
 
-**Pushing ordinary code does not update installed apps. Publishing a new versioned GitHub release does.** See the [release guide](docs/RELEASING.md). The repository URL and package identity live in one place: [`release-config.json`](release-config.json).
-
-## Build and test
-
-On Windows with the .NET 10 SDK:
+Built with C#, .NET 10 LTS, WPF, and Velopack.
 
 ```powershell
 dotnet restore
 dotnet test -c Release
 dotnet run --project src/AgeCheck
-./scripts/package.ps1 -Version 1.0.0
 ```
 
-The packaging script produces the self-contained application, installer and update assets under `artifacts/`. It uses the pinned Velopack CLI version in `dotnet-tools.json`.
+**[Build and publish updates](docs/RELEASING.md)** · **[Technical details](docs/TECHNICAL.md)** · **[Validation](docs/VALIDATION.md)**
 
-For synthetic UI checks after a Release build:
+Pushing code does not update installed apps. Publishing a new versioned release makes an update available.
 
-```powershell
-Start-Process ./src/AgeCheck/bin/Release/net10.0-windows/AgeCheck.exe -ArgumentList '--self-test' -Wait
-Get-Content artifacts/ui-test-results.txt
-```
+---
 
-`--screenshot` renders synthetic screen previews to `artifacts/screenshots/`. These explicit developer modes are never run during ordinary scanning.
-
-## Verification and limits
-
-Automated tests cover exact age boundaries, leap days, expiration day, both supported date conventions, invalid/conflicting/missing/duplicate fields, every truncated prefix of a sample, framing, multiline input, suffixes, control substitutions and buffer limits. The UI self-test exercises scan states, next-scan clearing, the real privacy timer, deactivation handling and the uninstalled-update path.
-
-Physical testing with a Honeywell **1950GHD-2-INT-N**, varied jurisdiction barcodes, and an installed-version-to-newer-version update remain unverified. The test inputs are synthetic. Check [validation notes](docs/VALIDATION.md) before deploying at a counter.
-
-## References and license
-
-- [Honeywell Xenon XP 1950g documentation](https://automation.honeywell.com/us/en/products/productivity-solutions/barcode-scanners/general-purpose-handheld/xenon-xp-1950g-general-duty-scanner)
-- [AAMVA 2020 card design standard, Annex D](https://www.aamva.org/getmedia/99ac7057-0f4d-4461-b0a2-3a5532e1b35c/AAMVA-2020-DLID-Card-Design-Standard.pdf)
-- [Current AAMVA standards](https://www.aamva.org/topics/driver-license-and-identification-standards)
-- [Velopack integration](https://docs.velopack.io/getting-started/csharp), [GitHub sources](https://docs.velopack.io/integrating/update-sources), [release workflow](https://docs.velopack.io/distributing/github-actions), [code signing](https://docs.velopack.io/packaging/signing)
-
-MIT licensed. See [LICENSE](LICENSE).
+Free and open source under the **[MIT license](LICENSE)**.
