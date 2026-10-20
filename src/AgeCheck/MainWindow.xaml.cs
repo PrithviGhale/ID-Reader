@@ -206,7 +206,14 @@ public partial class MainWindow : Window
             await Task.Delay(250); UpdateLayout();
             var content = (FrameworkElement)Content;
             var bitmap = new RenderTargetBitmap((int)content.ActualWidth, (int)content.ActualHeight, 96, 96, PixelFormats.Pbgra32);
-            bitmap.Render(content); var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap));
+            var canvas = new DrawingVisual();
+            using (var drawing = canvas.RenderOpen())
+            {
+                var area = new Rect(0, 0, content.ActualWidth, content.ActualHeight);
+                drawing.DrawRectangle(Background, null, area);
+                drawing.DrawRectangle(new VisualBrush(content), null, area);
+            }
+            bitmap.Render(canvas); var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap));
             using var stream = File.Create($"artifacts/screenshots/{state}.png"); encoder.Save(stream);
         }
         Close();
