@@ -191,6 +191,7 @@ public partial class MainWindow : Window
     {
         // Explicit developer-only export: synthetic demonstrations, never real scan data.
         Directory.CreateDirectory("artifacts/screenshots");
+        ((System.Windows.Controls.Panel)Content).Background = Background;
         foreach (string state in new[] { "ready", "passed", "under21", "expired", "review", "setup", "updates" })
         {
             Page(ScanPage);
@@ -206,7 +207,6 @@ public partial class MainWindow : Window
             await Task.Delay(250); UpdateLayout();
             var content = (FrameworkElement)Content;
             var bitmap = new RenderTargetBitmap((int)content.ActualWidth, (int)content.ActualHeight, 96, 96, PixelFormats.Pbgra32);
-            ((System.Windows.Controls.Panel)content).Background = Background;
             bitmap.Render(content); var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap));
             using var stream = File.Create($"artifacts/screenshots/{state}.png"); encoder.Save(stream);
         }
