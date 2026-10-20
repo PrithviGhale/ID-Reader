@@ -24,11 +24,13 @@ A simple Windows app for checking the birth date and expiration date in an ID ba
 | **Expiration check** | Shows when the ID's barcode expiration date has passed. |
 | **Clear results** | Large text shows 21+, Under 21, Expired, or Manual review. |
 | **Date comparison** | Shows the birth date and expiration date so you can compare them with the card. |
+| **Scanner text recovery** | Can recover dates from supported scans with missing headers or line breaks, then asks you to confirm the printed dates. |
 | **Private by default** | Processes scans on your PC. Does not save scan history or ID details. |
 | **Automatic clearing** | Clears results after 30 seconds, on the next scan, or when you leave the window. |
 | **Works offline** | No internet is needed to check a scan. |
 | **Built-in updates** | Check for updates, read what's new, download, and restart when you choose. |
 | **Simple, smooth design** | A clean Windows interface with short animations and no constantly running effects. |
+| **Flexible layout** | Adjusts to small windows, laptops, large monitors, and Windows display scaling. Scroll to reach extra content on small screens. |
 | **Demo mode** | Try made-up examples without scanning an ID. Each demo is clearly marked. |
 
 ## Get started
@@ -48,6 +50,19 @@ A simple Windows app for checking the birth date and expiration date in an ID ba
 - The setup guide is written for the **Honeywell Xenon XP 1950g**. Physical testing with that scanner is still needed.
 
 AgeCheck supports selected US and Canadian AAMVA barcode formats, versions 08–10. Unsupported, incomplete, or conflicting data asks for manual review. It does not support every ID format.
+
+### If your scanner sends one long line
+
+Version **1.0.2** can recover unique date and country fields from supported flattened scanner output, including a missing header or first field character. Instead of stopping at a header error, it shows **Check the printed dates**. Compare both dates with the physical ID, then choose **Both dates match the card**. The app calculates the age and expiration result from those confirmed dates.
+
+This is a **date-only check**. Missing separators mean the app cannot prove the whole barcode arrived. It never gives an automatic pass from recovered text. Missing, invalid, or conflicting dates still need manual review. For full barcode validation, use the recommended [scanner settings](docs/SCANNER_SETUP.md).
+
+<details>
+<summary>See the new scanner recovery screen</summary>
+
+![Scanner recovery with synthetic dates and a printed-card confirmation button](docs/images/recovery.png)
+
+</details>
 
 ## Know what the result means
 

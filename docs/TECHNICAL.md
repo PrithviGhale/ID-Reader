@@ -1,4 +1,4 @@
-﻿# Technical details
+# Technical details
 
 ## Privacy and performance
 
@@ -12,6 +12,16 @@
 Clearing removes application references and visible data; .NET garbage collection and Windows memory management do not provide a guarantee of immediate secure memory erasure. Avoid collecting process dumps while real IDs are in use.
 
 ## Supported barcode subset
+
+### Scanner compatibility in 1.0.2
+
+Strict frame validation remains unchanged. The UI additionally enables an operator-assisted recovery path for recognized flattened name-field/ANSI prefixes. It extracts each required date/country marker only when unique and followed by a complete value and a plausible next field boundary. The same calendar and consistency checks run on recovered values. It never marks recovery as a passed scan: an explicit printed-date comparison is required, and the result remains labeled as date-only. With separators missing, completeness and field boundaries cannot be proved; duplicate or malformed candidates are rejected conservatively. Calling `Barcode.Check` without its recovery option retains strict behavior.
+
+### Display layout
+
+The app declares PerMonitorV2 DPI awareness. Its width-aware layout stacks the date panel below the result below 800 logical pixels, reduces padding below 600, and scrolls vertically on short displays. Startup dimensions are capped to the Windows working area. Rendering tests exercise logical viewports from 480 to 2560 pixels wide, including the effective viewport sizes of 1080p at 125%, 150%, and 200% scaling. This is layout simulation, not physical mixed-monitor testing.
+
+Run the synthetic rendering checks with `AgeCheck.exe --layout-test`; previews and the report are written under `artifacts/layout/` and `artifacts/layout-results.txt`. No real ID data is used.
 
 AgeCheck validates AAMVA `ANSI ` headers, version **08, 09 or 10**, subfile offsets/lengths and exactly one `DL` or `ID` subfile. `DCG`, `DBB`, `DBA` and `DBD` are required for country, birth, expiration and issue dates. Duplicate fields, overlapping subfiles, missing data, invalid dates and unexpected trailing content require review. It is an age/date checker, not a validator of every mandatory AAMVA identity field.
 
@@ -35,7 +45,7 @@ On Windows with the .NET 10 SDK:
 dotnet restore
 dotnet test -c Release
 dotnet run --project src/AgeCheck
-./scripts/package.ps1 -Version 1.0.1
+./scripts/package.ps1 -Version 1.0.2
 ```
 
 The packaging script produces the self-contained application, installer and update assets under `artifacts/`. It uses the pinned Velopack CLI version in `dotnet-tools.json`.
@@ -63,4 +73,3 @@ Physical testing with a Honeywell **1950GHD-2-INT-N**, varied jurisdiction barco
 - [Velopack integration](https://docs.velopack.io/getting-started/csharp), [GitHub sources](https://docs.velopack.io/integrating/update-sources), [release workflow](https://docs.velopack.io/distributing/github-actions), [code signing](https://docs.velopack.io/packaging/signing)
 
 MIT licensed. See [LICENSE](../LICENSE).
-

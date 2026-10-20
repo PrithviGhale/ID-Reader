@@ -14,6 +14,14 @@ The application also accepts intact literal control characters, but keyboard int
 
 ## Troubleshooting
 
+### One long line, missing header, or missing separators
+
+Starting with 1.0.2, AgeCheck can recover unique `DBB`, `DBA`, `DBD`, and `DCG` fields from supported flattened scanner text beginning with a name field (`DCS`, or `CS` when its first character is lost), or a flattened supported ANSI header. It supports USA/CAN date formats. Optional age-threshold fields are checked when present.
+
+Recovered dates appear with **Check the printed dates**. Compare the birth and expiration dates with the card, then click **Both dates match the card**. The resulting age/expiration calculation is clearly labeled as a date-only check. It does not validate the complete barcode. Duplicate, invalid, inconsistent or missing required fields cannot be confirmed. This compatibility path does not replace correct scanner configuration.
+
+### Other problems
+
 | Symptom | Try |
 | --- | --- |
 | Scanner beeps, nothing happens | Click AgeCheck, select Scan an ID, and check USB keyboard mode. The beep is only a decode indication. |

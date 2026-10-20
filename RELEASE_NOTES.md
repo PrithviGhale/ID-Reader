@@ -1,48 +1,53 @@
-# AgeCheck 1.0.1 — Simple, private ID date checks
+# AgeCheck 1.0.2 — Better scanning, a fresh look, and flexible screens
 
-## Download and start
+**Download `AgeCheck-win-x64-Setup.exe` below to install.** Already on 1.0.1? Open **Updates** in the app, download the update, and restart when ready.
 
-**Download `AgeCheck-win-x64-Setup.exe` from Assets below.** Run it to install AgeCheck. You do not need to install .NET or developer tools separately.
+## Scanner fix
 
-Want to try it without installing? Use `AgeCheck-win-x64-Portable.zip`. The portable copy does not support in-app updates.
+Some USB scanners send the barcode as one long line, leaving out the header or line breaks. Older versions stopped with an unsupported-header message.
 
-## What's new
+AgeCheck can now recover the date fields from supported scanner text:
 
-- **Clean AgeCheck branding:** the app's publisher details and new installer names no longer include a personal name.
-- **A clearer project page:** screenshots, a simple feature list, and easier setup instructions.
-- **Better release notes:** clear download instructions and an explanation of what the app does.
+1. Scan the barcode with **Scan ID** open.
+2. If you see **Check the printed dates**, compare both dates with the physical card.
+3. Click **Both dates match the card** to see the age and expiration result.
 
-## Features included
+**Recovered text is a date-only check.** The app cannot verify that the full barcode arrived when its header or separators are missing. It will not give an automatic pass from that text. Missing, conflicting, or invalid dates still need manual review.
 
-- **Check for age 21+:** reads the birth date from a supported ID barcode.
-- **Check expiration:** shows if the barcode expiration date has passed.
-- **Easy-to-read results:** 21+, Under 21, Expired, or Manual review.
-- **Compare dates:** shows birth and expiration dates beside the result.
-- **Private scanning:** processes data on your PC and does not save scan history or ID details.
-- **Automatic clearing:** clears after 30 seconds, on the next scan, or when you leave the window.
-- **Offline use:** scan without an internet connection.
-- **Built-in updates:** check, download, and restart when you are ready.
-- **Smooth interface:** short animations with no constantly running effects.
-- **Try it safely:** made-up demo examples are clearly marked DEMO.
+## A new look
 
-## Coming from 1.0.0?
+- Compact top navigation instead of the fixed sidebar.
+- Shorter result headings and clearer explanations.
+- Birth and expiration dates in their own easy-to-read panel.
+- Updated colors, spacing, buttons, and brief transitions.
+- A new **Scanner recovery** demo with made-up data.
 
-**Close and uninstall 1.0.0, then install the new Setup file.** This one-time reinstall removes the old publisher and installation name. The new version uses a separate update channel, so 1.0.0 will not install it through the old updater. Future updates keep the AgeCheck identity.
+## More screen sizes
 
-## Which file should I choose?
+- The date panel moves below the result in narrow windows.
+- Text and buttons wrap instead of running off the side.
+- Small or short windows scroll so controls remain reachable.
+- The starting window fits the available desktop space.
+- Per-monitor DPI awareness supports Windows display scaling.
 
-| File | What it is for |
+## Still private
+
+Scans stay on your PC. No scan history is saved. Dates clear after 30 seconds, when you leave the window, or on the next scan. Recovery confirmation clears too.
+
+## Which download?
+
+| File | Use |
 | --- | --- |
-| **AgeCheck-win-x64-Setup.exe** | **Recommended.** Installs AgeCheck with built-in updates. |
-| AgeCheck-win-x64-Portable.zip | Try the app without installing. No in-app updates. |
-| `.nupkg` and `.json` files | Used by the updater. You do not need to open these. |
-| Source code | For people who want to build or change the app. |
+| **AgeCheck-win-x64-Setup.exe** | Recommended installer, with in-app updates. |
+| AgeCheck-win-x64-Portable.zip | Try without installing. No in-app updates. |
+| `.nupkg` and `.json` files | Update files; you do not need to open them. |
 
-## Before using it
+Version 1.0.0 users still need the one-time uninstall/reinstall because the package identity changed in 1.0.1.
 
-- Windows x64 is required. Selected US and Canadian AAMVA formats (08–10) are supported.
-- The installer is unsigned. Windows may show an unknown-publisher warning.
-- Physical Honeywell scanner testing and an installed-to-installed update test are still outstanding.
-- **ID authenticity not verified.** Check the printed card, photograph, and customer. A barcode result does not approve a sale.
+## Checks and limits
 
-[Scanner setup](https://github.com/PrithviGhale/ID-Reader/blob/main/docs/SCANNER_SETUP.md) · [Test results](https://github.com/PrithviGhale/ID-Reader/blob/main/docs/VALIDATION.md)
+Automated checks use only made-up data. They cover scanner recovery, duplicate and incomplete dates, privacy clearing, and layouts at several window sizes. Physical scanner and mixed-monitor testing are still needed. The installer is unsigned, so Windows may show an unknown-publisher warning.
+
+**ID authenticity not verified.** Compare the printed card, photograph, and customer. A barcode result does not approve a sale.
+
+[Scanner setup](https://github.com/PrithviGhale/ID-Reader/blob/main/docs/SCANNER_SETUP.md) · [Validation details](https://github.com/PrithviGhale/ID-Reader/blob/main/docs/VALIDATION.md)

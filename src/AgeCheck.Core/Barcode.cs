@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 namespace AgeCheck.Core;
 
 public enum Outcome { Passed, Under21, Expired, Review }
-public sealed record CheckResult(Outcome Outcome, string Detail, DateOnly? Birth = null, DateOnly? Expiration = null);
+public sealed record CheckResult(Outcome Outcome, string Detail, DateOnly? Birth = null, DateOnly? Expiration = null, bool NeedsDateConfirmation = false);
 
 public static partial class Barcode
 {
@@ -12,7 +12,7 @@ public static partial class Barcode
     public static string Normalize(string raw) => raw.Replace("[LF]", "\n").Replace("[CR]", "\r")
         .Replace("[RS]", "\u001e").Replace("[GS]", "\u001d").Replace("[ETX]", "\u0003");
 
-    public static CheckResult Check(string raw, DateOnly today)
+    public static CheckResult Check(string raw, DateOnly today, bool allowScannerRecovery = false)
     {
         CheckResult Bad(string reason) => new(Outcome.Review, reason);
         if (raw.Length > InputLimit) return Bad("Input limit exceeded. Clear and rescan.");
@@ -20,7 +20,7 @@ public static partial class Barcode
         if (text.Any(c => c > 127)) return Bad("Unsupported character encoding. Check scanner keyboard layout.");
         if (text.StartsWith("]L0", StringComparison.Ordinal)) text = text[3..];
         if (!text.StartsWith("@\n\u001e\rANSI ", StringComparison.Ordinal))
-            return Bad("Unsupported barcode header or altered control characters. Check scanner setup.");
+            return allowScannerRecovery ? RecoverScannerDates(text, today) : Bad("Unsupported barcode header or altered control characters. Check scanner setup.");
         if (text.Length < 21 || !Digits().IsMatch(text.Substring(9, 12))) return Bad("Incomplete or malformed AAMVA header.");
         var version = text.Substring(15, 2);
         if (version is not ("08" or "09" or "10")) return Bad("Unsupported AAMVA version. Supported versions: 08, 09 and 10.");
@@ -76,6 +76,39 @@ public static partial class Barcode
                 return new(Outcome.Review, "Encoded age-threshold date conflicts with the birth date or needs local policy review.", birth, expiry);
         }
         return Evaluate(birth, expiry, today);
+    }
+
+    private static CheckResult RecoverScannerDates(string text, DateOnly today)
+    {
+        CheckResult Bad(string detail) => new(Outcome.Review, detail);
+        // A keyboard scanner can strip separators, the header, and even the first D.
+        // Recovery is an operator-assisted date check, NEVER full-frame validation.
+        bool nameStart = text.StartsWith("DCS", StringComparison.Ordinal) || text.StartsWith("CS", StringComparison.Ordinal)
+            || text.StartsWith("DLDCS", StringComparison.Ordinal) || text.StartsWith("IDDCS", StringComparison.Ordinal);
+        bool flatHeader = Regex.IsMatch(text, @"^@?ANSI [0-9]{6}(08|09|10)[0-9]{4}", RegexOptions.CultureInvariant);
+        if (!nameStart && !flatHeader) return Bad("The scanner did not send a supported header. Check Scanner setup and scan again.");
+        text = text.TrimEnd('\r', '\n', '\t', '\u0003');
+        if (text.Any(c => char.IsControl(c) && c is not ('\r' or '\n'))) return Bad("Unexpected scanner control characters. Rescan or check manually.");
+        text = text.Replace("\r", "").Replace("\n", "");
+        var recovered = new Dictionary<string, string>();
+        foreach (var key in new[] { "DCG", "DBB", "DBA", "DBD", "DDH", "DDI", "DDJ" })
+        {
+            int occurrences = Regex.Matches(text, key, RegexOptions.CultureInvariant).Count;
+            bool required = key is "DCG" or "DBB" or "DBA" or "DBD";
+            if (!required && occurrences == 0) continue;
+            if (occurrences != 1) return Bad("Missing or repeated date/country fields. Scan again or review the card manually.");
+            string valuePattern = key == "DCG" ? "USA|CAN" : "[0-9]{8}";
+            var match = Regex.Match(text, key + "(" + valuePattern + @")(?=D[A-Z]{2}|Z[A-Z]{2}|$)", RegexOptions.CultureInvariant);
+            if (!match.Success) return Bad("A date or country field is incomplete or ambiguous. Scan again or review manually.");
+            recovered[key] = match.Groups[1].Value;
+        }
+        // Reuse all strict calendar, consistency and optional threshold checks.
+        string body = "DL" + string.Join('\n', recovered.Select(p => p.Key + p.Value)) + "\r";
+        var result = Check($"@\n\u001e\rANSI 636000100001DL0031{body.Length:D4}{body}", today);
+        if (result.Outcome == Outcome.Review) return result;
+        return new(Outcome.Review,
+            "Dates recovered from scanner text. The header or separators are missing, so scan completeness cannot be verified. Compare both dates with the printed card, then confirm below.",
+            result.Birth, result.Expiration, true);
     }
 
     public static CheckResult Evaluate(DateOnly birth, DateOnly expiry, DateOnly today)

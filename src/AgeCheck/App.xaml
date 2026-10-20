@@ -3,7 +3,7 @@
   <Style TargetType="Window"><Setter Property="Foreground" Value="#182C38"/></Style>
   <Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style>
   <Style TargetType="Button">
-   <Setter Property="Background" Value="#E9EFED"/><Setter Property="Foreground" Value="#173E38"/>
+   <Setter Property="Background" Value="#E7EDF8"/><Setter Property="Foreground" Value="#34507D"/>
    <Setter Property="Padding" Value="20,13"/><Setter Property="FontWeight" Value="SemiBold"/><Setter Property="Cursor" Value="Hand"/>
    <Setter Property="BorderThickness" Value="0"/><Setter Property="HorizontalContentAlignment" Value="Center"/>
    <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button">

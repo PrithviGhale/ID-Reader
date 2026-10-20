@@ -1,5 +1,15 @@
 # Validation record
 
+## Version 1.0.2 scanner recovery and layout
+
+- **72 automated core tests passed.** Added flattened scanner output, USA/CAN recovery, supported missing-prefix variants, unique field requirements, malformed/duplicate/missing/conflicting dates, partial inputs, and prevention of automatic passes from recovery.
+- WPF self-test passed: recovery dates display, explicit operator confirmation, preserved DEMO labeling, focus-loss clearing of pending confirmation, the real 30-second privacy timer, and the existing scan states.
+- **60 layout cases passed** across 10 logical viewports: 480×640, 640×480, 800×600, 1024×768, 1366×768, 1920×1080, 2560×1440, 960×540, 1280×720 and 1536×864. Each tests ready, passed, review, recovery, setup and update screens. Checks reject horizontal overflow and text outside the content area, and verify the recovery button remains reachable by scrolling.
+- Rendering uses an offscreen WPF presentation source so large previews are not clipped by the test machine's desktop. Small-screen and desktop renders were visually inspected. The viewport sizes include effective 1080p sizes at 125%, 150% and 200% scaling. Actual monitor changes and physical DPI behavior remain unverified.
+- A short idle sample after the UI self-test used **0.0 ms CPU over 5 seconds** and **192.5 MiB working set**. This is one measurement, not a guarantee for every PC.
+- Only synthetic barcode content was used in tests and screenshots. No customer ID data was added to the repository.
+- The physical Honeywell scanner and an installed-to-installed update are still unverified. This release adds assisted recovery, not a claim of complete barcode validation when separators are missing.
+
 ## Version 1.0.1 branding update
 
 All 46 core tests passed again. The self-contained application and installer were rebuilt with `AgeCheck` as the product, company, package ID and package author. The new update channel is `win-x64`; users of 1.0.0 need a one-time reinstall. No scan-checking logic changed in this release.

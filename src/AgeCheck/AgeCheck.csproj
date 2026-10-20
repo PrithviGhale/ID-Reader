@@ -16,6 +16,7 @@
     <UseWPF>true</UseWPF>
     <StartupObject>AgeCheck.App</StartupObject>
     <ApplicationIcon>Assets/AgeCheck.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
     <Company>AgeCheck</Company>
     <Authors>AgeCheck</Authors>
     <Product>AgeCheck</Product>

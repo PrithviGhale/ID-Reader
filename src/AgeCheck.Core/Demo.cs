@@ -2,6 +2,12 @@ using System.Globalization;
 namespace AgeCheck.Core;
 public static class Demo
 {
+    public static string Flattened(DateOnly birth, DateOnly expiry, DateOnly issued, string country = "USA")
+    {
+        string f = country == "CAN" ? "yyyyMMdd" : "MMddyyyy";
+        string Date(DateOnly d) => d.ToString(f, CultureInfo.InvariantCulture);
+        return $"CSSAMPLEDDENDACALEXDDFNDADTESTDDGNDCADDCBNONEDCDNONEDBD{Date(issued)}DBB{Date(birth)}DBA{Date(expiry)}DBC1DCG{country}DDANDDB01012024";
+    }
     public static string Create(DateOnly birth, DateOnly expiry, DateOnly issued, string country = "USA")
     {
         string f = country == "CAN" ? "yyyyMMdd" : "MMddyyyy";
