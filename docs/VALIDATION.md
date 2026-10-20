@@ -1,5 +1,15 @@
 # Validation record
 
+## Version 1.0.3 accented header, themes and motion
+
+- **89 automated parser tests passed.** Added the reported accented-header structure using unrelated synthetic values, decomposed accents, supported prefixes, country-specific dates/suffixes, malformed and repeated fields, unsupported header mutations and prevention of broad transliteration.
+- The WPF self-test sends the synthetic accented-header payload in chunks through the routed text-input handler. Dates display and confirmation succeeds. Capture on other pages stays disabled.
+- Light/dark selection, saved preferences, legacy settings migration, animation preferences and primary/muted text contrast (at least 4.5) are checked.
+- Opening, page transitions, rapid tab switching and reduced-motion cancellation are checked in the live WPF window. Animations return to full opacity and zero translation.
+- **180 layout cases passed**: both themes, ready/passed/under-21/expired/review/recovery states and setup/updates/settings across ten logical viewport sizes. Screenshots use synthetic data only. The images were visually reviewed, including narrow settings and scanner recovery.
+- The final self-contained packaged application passed the UI self-test, including real visual-tree theme changes and the accented-header routed input. A five-second idle sample measured **0.0 ms CPU** and **209.8 MiB working set** on this machine; this is a short measurement, not a performance guarantee.
+- Actual physical scanner and mixed-monitor testing and a complete installed-version update remain unverified. The specific header repair is based on the supplied transport pattern; it is not a claim that all scanner mutations are supported.
+
 ## Version 1.0.2 scanner recovery and layout
 
 - **72 automated core tests passed.** Added flattened scanner output, USA/CAN recovery, supported missing-prefix variants, unique field requirements, malformed/duplicate/missing/conflicting dates, partial inputs, and prevention of automatic passes from recovery.

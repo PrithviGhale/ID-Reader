@@ -2,6 +2,11 @@ using System.Globalization;
 namespace AgeCheck.Core;
 public static class Demo
 {
+    public static string KeyboardHeader(DateOnly birth, DateOnly expiry, DateOnly issued, string country = "USA")
+    {
+        var data = "DLDAQSYNTHETIC0001D" + Flattened(birth, expiry, issued, country);
+        return $"@ÂNSI 636000100001DL0031{data.Length:D4}{data}";
+    }
     public static string Flattened(DateOnly birth, DateOnly expiry, DateOnly issued, string country = "USA")
     {
         string f = country == "CAN" ? "yyyyMMdd" : "MMddyyyy";

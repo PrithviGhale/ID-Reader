@@ -17,8 +17,15 @@ public static partial class Barcode
         CheckResult Bad(string reason) => new(Outcome.Review, reason);
         if (raw.Length > InputLimit) return Bad("Input limit exceeded. Clear and rescan.");
         var text = Normalize(raw);
-        if (text.Any(c => c > 127)) return Bad("Unsupported character encoding. Check scanner keyboard layout.");
         if (text.StartsWith("]L0", StringComparison.Ordinal)) text = text[3..];
+        // Some keyboard-wedge/dead-key layouts combine the header A with a circumflex.
+        // Repair ONLY that fixed header token, and only for assisted recovery.
+        if (allowScannerRecovery)
+        {
+            if (text.StartsWith("@ÂNSI ", StringComparison.Ordinal)) text = "@ANSI " + text[6..];
+            else if (text.StartsWith("@A\u0302NSI ", StringComparison.Ordinal)) text = "@ANSI " + text[7..];
+        }
+        if (text.Any(c => c > 127)) return Bad("Unsupported character encoding. Match the scanner keyboard layout to Windows and rescan.");
         if (!text.StartsWith("@\n\u001e\rANSI ", StringComparison.Ordinal))
             return allowScannerRecovery ? RecoverScannerDates(text, today) : Bad("Unsupported barcode header or altered control characters. Check scanner setup.");
         if (text.Length < 21 || !Digits().IsMatch(text.Substring(9, 12))) return Bad("Incomplete or malformed AAMVA header.");

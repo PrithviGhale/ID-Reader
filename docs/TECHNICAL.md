@@ -4,14 +4,24 @@
 
 - ID processing is local and works offline. The app does not save scan history, raw barcodes, names, addresses, license numbers or images.
 - Input and results clear after 30 seconds, on the next scan, when changing pages, and when the app loses focus.
-- Only the startup-update preference is stored in `%LOCALAPPDATA%\AgeCheck\settings.json`.
+- Only non-sensitive preferences (startup update checks, light/dark appearance and motion) are stored in `%LOCALAPPDATA%\AgeCheck\settings.json`.
 - No analytics or application crash reporting. Update requests contain no scanned ID data. GitHub receives ordinary network metadata when checking/downloading updates.
 - No browser engine, global keyboard hook, background service or continuous animation. Input and one-shot timers drive the interface; all scan timers stop when idle.
-- Transitions last 180 ms and respect Windows animation preferences; software-rendered sessions skip them.
+- Page/result transitions last 260 ms; the opening reveal lasts 460 ms. They respect the app's motion switch and Windows animation preference, use opacity/translation, and stop at their base values.
 
 Clearing removes application references and visible data; .NET garbage collection and Windows memory management do not provide a guarantee of immediate secure memory erasure. Avoid collecting process dumps while real IDs are in use.
 
 ## Supported barcode subset
+
+### Header recovery in 1.0.3
+
+The assisted path recognizes the specific composed/decomposed accented `@ÂNSI` token at the start after an optional supported symbology prefix. This narrow repair happens before the ASCII check; other non-ASCII input is still rejected. Strict mode does not repair the header or auto-pass flattened data. See [research and references](SCANNER_RESEARCH.md) for the diagnosis, official references and limits.
+
+### Themes and motion
+
+Frozen brushes with WPF dynamic resource references cover the entire visual tree, including results and scrollbars. Changing appearance updates those resources and saves the selected theme; older preferences with only startup-check settings still load. Developer modes use a separate preferences file under `artifacts/` and never overwrite real user preferences.
+
+Opening and page transitions use finite fade/translation animations with `FillBehavior.Stop`. Starting a new transition cancels the prior opacity/translation animation for that element. Reduced motion cancels active effects and leaves controls at full opacity with zero offset. `--motion-test` checks opening, page changes, rapid tab changes and cancellation. Theme contrast checks require a ratio of at least 4.5 for primary and muted text on the main surfaces.
 
 ### Scanner compatibility in 1.0.2
 
@@ -45,7 +55,7 @@ On Windows with the .NET 10 SDK:
 dotnet restore
 dotnet test -c Release
 dotnet run --project src/AgeCheck
-./scripts/package.ps1 -Version 1.0.2
+./scripts/package.ps1 -Version 1.0.3
 ```
 
 The packaging script produces the self-contained application, installer and update assets under `artifacts/`. It uses the pinned Velopack CLI version in `dotnet-tools.json`.

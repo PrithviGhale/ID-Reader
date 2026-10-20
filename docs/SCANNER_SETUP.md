@@ -14,6 +14,12 @@ The application also accepts intact literal control characters, but keyboard int
 
 ## Troubleshooting
 
+### The header shows `@ÂNSI`
+
+Update to **1.0.3**. It recognizes the specific accented-header variation in the assisted recovery path. Keep AgeCheck's **Scan** page active, scan again, compare both displayed dates with the printed card, and confirm if they match. Missing or conflicting dates still need manual review.
+
+Also match the scanner's keyboard country/layout to Windows to address character changes at their source. The accent alone does not identify which physical setting caused it. See [research and test notes](SCANNER_RESEARCH.md).
+
 ### One long line, missing header, or missing separators
 
 Starting with 1.0.2, AgeCheck can recover unique `DBB`, `DBA`, `DBD`, and `DCG` fields from supported flattened scanner text beginning with a name field (`DCS`, or `CS` when its first character is lost), or a flattened supported ANSI header. It supports USA/CAN date formats. Optional age-threshold fields are checked when present.

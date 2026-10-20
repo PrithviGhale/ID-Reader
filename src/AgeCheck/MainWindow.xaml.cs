@@ -25,13 +25,21 @@ public partial class MainWindow : Window
     private int scanGeneration;
     private CheckResult? recoveredDates;
     private bool recoveryDemo;
+    private bool darkTheme = true;
+    private bool motionEnabled = true;
+    private CheckResult? visibleResult;
+    private UIElement? activePage;
     private static bool suppressAnimations;
-    private readonly string settingsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AgeCheck", "settings.json");
+    private readonly string settingsPath;
     private static DateOnly Today => DateOnly.FromDateTime(DateTime.Now);
     private bool CanCapture => IsActive && ScanPage.Visibility == Visibility.Visible && !processing && !inputBlocked;
 
     public MainWindow(string[] args)
     {
+        bool developerMode = args.Any(a => a is "--self-test" or "--layout-test" or "--screenshot" or "--motion-test");
+        settingsPath = developerMode ? Path.Combine(Environment.CurrentDirectory, "artifacts", "test-preferences.json")
+            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AgeCheck", "settings.json");
+        Theme.Apply(true);
         InitializeComponent();
         var workArea = SystemParameters.WorkArea;
         MinWidth = Math.Min(MinWidth, Math.Max(360, workArea.Width - 24));
@@ -49,8 +57,20 @@ public partial class MainWindow : Window
             updater = new UpdateManager(new GithubSource(url, null, false), new UpdateOptions { AllowVersionDowngrade = false, ExplicitChannel = config.RootElement.GetProperty("channel").GetString() });
         }
         catch { UpdateStatus.Text = "Update configuration is unavailable. Scanning still works."; CheckButton.IsEnabled = false; }
-        try { if (File.Exists(settingsPath)) StartupChecks.IsChecked = JsonSerializer.Deserialize<Preferences>(File.ReadAllText(settingsPath))?.StartupChecks ?? true; }
+        try
+        {
+            if (!developerMode && File.Exists(settingsPath))
+            {
+                var prefs = JsonSerializer.Deserialize<Preferences>(File.ReadAllText(settingsPath));
+                StartupChecks.IsChecked = prefs?.StartupChecks ?? true;
+                darkTheme = prefs?.Theme != "Light";
+                motionEnabled = prefs?.Animations ?? true;
+            }
+        }
         catch { /* A damaged settings file must not prevent offline use. */ }
+        MotionEnabled.IsChecked = motionEnabled;
+        activePage = ScanPage; ApplyAppearance(darkTheme, false);
+        SourceInitialized += (_, _) => Theme.TitleBar(this, darkTheme);
         quiet.Tick += async (_, _) => await FinishScan();
         deadline.Tick += (_, _) => { Clear(); inputBlocked = true; ShowResult(new(Outcome.Review, "Scan exceeded 20 seconds. Clear and rescan."), false); };
         privacy.Tick += (_, _) => Clear();
@@ -65,6 +85,8 @@ public partial class MainWindow : Window
             if (args.Contains("--layout-test")) { suppressAnimations = true; await LayoutTest(); return; }
             if (args.Contains("--self-test")) { await SelfTest(); return; }
             if (args.Contains("--screenshot")) { suppressAnimations = true; await ExportScreenshots(); return; }
+            if (args.Contains("--motion-test")) { await MotionTest(); return; }
+            Animate(PageHost, true); Animate(BrandMark, true);
             if (StartupChecks.IsChecked == true) await CheckUpdates();
         };
     }
@@ -113,25 +135,26 @@ public partial class MainWindow : Window
     {
         scanGeneration++; scan.Clear(); quiet.Stop(); deadline.Stop(); privacy.Stop(); inputBlocked = false; showingResult = false;
         recoveredDates = null; recoveryDemo = false; RecoveryNotice.Visibility = Visibility.Collapsed;
-        Phase.Text = "READY"; Headline.Text = "Ready to scan"; Symbol.Text = "↗";
-        ResultSubtitle.Text = "Place the barcode in the scanner's view.";
-        Detail.Text = "Keep this window active. Your result will appear here.";
+        visibleResult = null;
+        Phase.Text = "READY TO SCAN"; Headline.Text = "Ready to scan"; Symbol.Text = "⌁";
+        ResultSubtitle.Text = "Aim at the barcode on the back of the card.";
+        Detail.Text = "Keep this window active. Your result appears here.";
         BirthLabel.Text = ExpiryLabel.Text = "—"; DemoBadge.Visibility = Visibility.Collapsed;
-        SymbolBox.Background = Brush("#EDF2FF"); Symbol.Foreground = Brush("#416BC2");
+        PaintStatus(null);
     }
-    private static SolidColorBrush Brush(string color) { var b = (SolidColorBrush)new BrushConverter().ConvertFromString(color)!; b.Freeze(); return b; }
     private void ShowResult(CheckResult result, bool demo)
     {
+        visibleResult = result;
         showingResult = true; Phase.Text = "CHECK COMPLETE"; DemoBadge.Visibility = demo ? Visibility.Visible : Visibility.Collapsed;
         recoveredDates = result.NeedsDateConfirmation ? result : null;
         recoveryDemo = demo;
         RecoveryNotice.Visibility = result.NeedsDateConfirmation ? Visibility.Visible : Visibility.Collapsed;
-        (Headline.Text, Symbol.Text, string color, string background) = result.Outcome switch
+        (Headline.Text, Symbol.Text) = result.Outcome switch
         {
-            Outcome.Passed => ("21 or older", "✓", "#176B53", "#E6F5EC"),
-            Outcome.Under21 => ("Under 21", "!", "#A13935", "#FBE9E6"),
-            Outcome.Expired => ("Expired", "×", "#9B5916", "#FFF0DD"),
-            _ => (result.NeedsDateConfirmation ? "Check the printed dates" : "Unable to check", "?", "#94601B", "#FFF2DC")
+            Outcome.Passed => ("21 or older", "✓"),
+            Outcome.Under21 => ("Under 21", "!"),
+            Outcome.Expired => ("Expired", "×"),
+            _ => (result.NeedsDateConfirmation ? "Check the printed dates" : "Unable to check", "?")
         };
         ResultSubtitle.Text = result.Outcome switch
         {
@@ -140,28 +163,36 @@ public partial class MainWindow : Window
             Outcome.Expired => "Barcode expiration date has passed",
             _ => result.NeedsDateConfirmation ? "Scanner text recovered · confirmation needed" : "Manual review required"
         };
-        Detail.Text = result.Detail; Symbol.Foreground = Brush(color); SymbolBox.Background = Brush(background);
+        Detail.Text = result.Detail;
+        PaintStatus(result.Outcome);
         BirthLabel.Text = result.Birth?.ToString("MMM dd, yyyy", System.Globalization.CultureInfo.InvariantCulture) ?? "—";
         ExpiryLabel.Text = result.Expiration?.ToString("MMM dd, yyyy", System.Globalization.CultureInfo.InvariantCulture) ?? "—";
         Animate(ResultCard); privacy.Stop(); privacy.Start();
     }
-    private static void Animate(UIElement element)
+    private void Animate(UIElement element, bool opening = false)
     {
-        if (!suppressAnimations && SystemParameters.ClientAreaAnimation && (RenderCapability.Tier >> 16) > 0)
-            element.BeginAnimation(OpacityProperty, new DoubleAnimation(0.65, 1, TimeSpan.FromMilliseconds(180)) { FillBehavior = FillBehavior.Stop });
+        element.BeginAnimation(OpacityProperty, null);
+        if (element.RenderTransform is TranslateTransform old) old.BeginAnimation(TranslateTransform.YProperty, null);
+        element.Opacity = 1;
+        if (suppressAnimations || !motionEnabled || !SystemParameters.ClientAreaAnimation) return;
+        var duration = TimeSpan.FromMilliseconds(opening ? 460 : 260);
+        var easing = new CubicEase { EasingMode = EasingMode.EaseOut };
+        var move = new TranslateTransform(); element.RenderTransform = move;
+        element.BeginAnimation(OpacityProperty, new DoubleAnimation(opening ? 0 : 0.3, 1, duration) { EasingFunction = easing, FillBehavior = FillBehavior.Stop });
+        move.BeginAnimation(TranslateTransform.YProperty, new DoubleAnimation(opening ? 22 : 10, 0, duration) { EasingFunction = easing, FillBehavior = FillBehavior.Stop });
     }
     private void Page(UIElement page)
     {
-        Clear(); ScanPage.Visibility = SetupPage.Visibility = UpdatesPage.Visibility = Visibility.Collapsed;
+        Clear(); ScanPage.Visibility = SetupPage.Visibility = UpdatesPage.Visibility = SettingsPage.Visibility = Visibility.Collapsed;
+        activePage = page;
         page.Visibility = Visibility.Visible; Animate(page);
-        ScanNav.Background = Brush(page == ScanPage ? "#334971" : "#17233C");
-        SetupNav.Background = Brush(page == SetupPage ? "#334971" : "#17233C");
-        UpdatesNav.Background = Brush(page == UpdatesPage ? "#334971" : "#17233C");
+        PaintNavigation();
         PageScroll.ScrollToTop();
     }
     private void ScanPage_Click(object sender, RoutedEventArgs e) => Page(ScanPage);
     private void SetupPage_Click(object sender, RoutedEventArgs e) => Page(SetupPage);
     private void UpdatesPage_Click(object sender, RoutedEventArgs e) => Page(UpdatesPage);
+    private void SettingsPage_Click(object sender, RoutedEventArgs e) => Page(SettingsPage);
     private void Clear_Click(object sender, RoutedEventArgs e) => Clear();
     private void DemoResult(int years, bool expired = false)
     {
@@ -172,7 +203,7 @@ public partial class MainWindow : Window
     private void ExpiredDemo_Click(object sender, RoutedEventArgs e) => DemoResult(30, true);
     private void RecoveryDemo_Click(object sender, RoutedEventArgs e)
     {
-        Clear(); ShowResult(Barcode.Check(Demo.Flattened(Today.AddYears(-25), Today.AddYears(2), Today.AddYears(-1)), Today, true), true);
+        Clear(); ShowResult(Barcode.Check(Demo.KeyboardHeader(Today.AddYears(-25), Today.AddYears(2), Today.AddYears(-1)), Today, true), true);
     }
     private void ConfirmDates_Click(object sender, RoutedEventArgs e)
     {
@@ -194,11 +225,55 @@ public partial class MainWindow : Window
         DatesPanel.Margin = compact ? new Thickness(0, 20, 0, 0) : new Thickness(0);
         ResultSummary.Margin = compact ? new Thickness(0) : new Thickness(0, 0, 24, 0);
         Headline.FontSize = width < 600 ? 28 : 34;
+        LocalBadge.Visibility = width < 650 ? Visibility.Collapsed : Visibility.Visible;
     }
     private void StartupChecks_Click(object sender, RoutedEventArgs e)
     {
-        try { Directory.CreateDirectory(Path.GetDirectoryName(settingsPath)!); File.WriteAllText(settingsPath, JsonSerializer.Serialize(new Preferences(StartupChecks.IsChecked == true))); }
-        catch { UpdateStatus.Text = "Could not save the preference. It applies for this session."; }
+        SavePreferences();
+    }
+    private void SavePreferences()
+    {
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(settingsPath)!);
+            File.WriteAllText(settingsPath, JsonSerializer.Serialize(new Preferences(StartupChecks.IsChecked == true, darkTheme ? "Dark" : "Light", motionEnabled)));
+            SettingsStatus.Text = "Preferences saved on this PC. ID data is never saved.";
+        }
+        catch { SettingsStatus.Text = "Could not save preferences. They still apply for this session."; UpdateStatus.Text = "Could not save preferences. They still apply for this session."; }
+    }
+    private void ApplyAppearance(bool dark, bool save)
+    {
+        darkTheme = dark; Theme.Apply(dark, RootLayout);
+        Theme.TitleBar(this, dark);
+        PaintNavigation(); PaintStatus(visibleResult?.Outcome);
+        LightThemeButton.SetResourceReference(System.Windows.Controls.Control.BackgroundProperty, dark ? "Quiet" : "Accent");
+        LightThemeButton.SetResourceReference(System.Windows.Controls.Control.ForegroundProperty, dark ? "Ink" : "AccentInk");
+        DarkThemeButton.SetResourceReference(System.Windows.Controls.Control.BackgroundProperty, dark ? "Accent" : "Quiet");
+        DarkThemeButton.SetResourceReference(System.Windows.Controls.Control.ForegroundProperty, dark ? "AccentInk" : "Ink");
+        if (save) SavePreferences();
+    }
+    private void PaintNavigation()
+    {
+        foreach (var (button,page) in new[] { (ScanNav, ScanPage), (SetupNav, SetupPage), (UpdatesNav, UpdatesPage), (SettingsNav, SettingsPage) })
+        {
+            button.SetResourceReference(System.Windows.Controls.Control.BackgroundProperty, page == activePage ? "AccentSoft" : "Surface");
+            button.SetResourceReference(System.Windows.Controls.Control.ForegroundProperty, page == activePage ? "AccentText" : "Muted");
+        }
+    }
+    private void PaintStatus(Outcome? outcome)
+    {
+        string ink = outcome is Outcome.Under21 or Outcome.Expired ? "Danger" : outcome == Outcome.Review ? "WarmInk" : "AccentText";
+        string surface = outcome is Outcome.Under21 or Outcome.Expired ? "DangerSoft" : outcome == Outcome.Review ? "Warm" : "AccentSoft";
+        Symbol.SetResourceReference(System.Windows.Controls.TextBlock.ForegroundProperty, ink);
+        SymbolBox.SetResourceReference(System.Windows.Controls.Border.BackgroundProperty, surface);
+    }
+    private void LightTheme_Click(object sender, RoutedEventArgs e) => ApplyAppearance(false, true);
+    private void DarkTheme_Click(object sender, RoutedEventArgs e) => ApplyAppearance(true, true);
+    private void MotionEnabled_Click(object sender, RoutedEventArgs e)
+    {
+        motionEnabled = MotionEnabled.IsChecked == true;
+        if (!motionEnabled) { Animate(PageHost); Animate(BrandMark); Animate(ResultCard); foreach (var page in new[] { ScanPage, SetupPage, UpdatesPage, SettingsPage }) Animate(page); }
+        SavePreferences();
     }
     private void UpdateButtons()
     {
@@ -266,7 +341,7 @@ public partial class MainWindow : Window
         }
         Close();
     }
-    private sealed record Preferences(bool StartupChecks);
+    private sealed record Preferences(bool StartupChecks = true, string Theme = "Dark", bool Animations = true);
 
     private async Task LayoutTest()
     {
@@ -278,8 +353,13 @@ public partial class MainWindow : Window
             Content = null;
             RootLayout.SetValue(System.Windows.Documents.TextElement.FontFamilyProperty, FontFamily);
             RootLayout.SetValue(System.Windows.Documents.TextElement.FontSizeProperty, FontSize);
-            RootLayout.SetValue(System.Windows.Documents.TextElement.ForegroundProperty, Foreground);
-            RootLayout.Background = Background;
+            RootLayout.SetResourceReference(System.Windows.Documents.TextElement.ForegroundProperty, "Ink");
+            RootLayout.SetResourceReference(System.Windows.Controls.Panel.BackgroundProperty, "Canvas");
+            foreach (bool dark in new[] { true, false })
+            {
+            ApplyAppearance(dark, false);
+            string folder = Path.Combine("artifacts/layout", dark ? "dark" : "light");
+            Directory.CreateDirectory(folder);
             foreach (var (width, height) in new[] { (480,640), (640,480), (800,600), (1024,768), (1366,768), (1920,1080), (2560,1440), (960,540), (1280,720), (1536,864) })
             {
                 using var source = new HwndSource(new HwndSourceParameters("AgeCheck synthetic layout test")
@@ -290,16 +370,19 @@ public partial class MainWindow : Window
                 source.CompositionTarget.RenderMode = RenderMode.SoftwareOnly;
                 RootLayout.Width = width; RootLayout.Height = height;
                 source.RootVisual = RootLayout;
-                foreach (var state in new[] { "ready", "passed", "review", "recovery", "setup", "updates" })
+                foreach (var state in new[] { "ready", "passed", "under21", "expired", "review", "recovery", "setup", "updates", "settings" })
                 {
                     Page(ScanPage); AdaptLayout(width);
                     switch (state)
                     {
                         case "passed": DemoResult(25); break;
+                        case "under21": DemoResult(19); break;
+                        case "expired": DemoResult(30, true); break;
                         case "review": ShowResult(new(Outcome.Review, "The scanner data is incomplete. Check the scanner settings and scan again."), true); break;
                         case "recovery": RecoveryDemo_Click(this, new RoutedEventArgs()); break;
                         case "setup": Page(SetupPage); break;
                         case "updates": Page(UpdatesPage); break;
+                        case "settings": Page(SettingsPage); break;
                     }
                     RootLayout.Measure(new Size(width,height)); RootLayout.Arrange(new Rect(0,0,width,height)); RootLayout.UpdateLayout();
                     await Task.Delay(220);
@@ -307,20 +390,21 @@ public partial class MainWindow : Window
                     CheckTextBounds(PageHost, PageHost, $"{width}x{height} {state}");
                     var bitmap = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);
                     bitmap.Render(RootLayout); var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap));
-                    using var stream = File.Create($"artifacts/layout/{width}x{height}-{state}.png"); encoder.Save(stream);
-                    report.Add($"PASS {width}x{height} {state}");
+                    using var stream = File.Create($"{folder}/{width}x{height}-{state}.png"); encoder.Save(stream);
+                    report.Add($"PASS {(dark ? "dark" : "light")} {width}x{height} {state}");
                     if (state == "recovery")
                     {
-                        PageScroll.ScrollToBottom(); RootLayout.UpdateLayout(); await Task.Delay(60);
+                        ConfirmDatesButton.BringIntoView(); RootLayout.UpdateLayout(); await Task.Delay(60);
                         var point = ConfirmDatesButton.TransformToAncestor(PageScroll).Transform(new Point(0,0));
                         if (point.Y < -1 || point.Y + ConfirmDatesButton.ActualHeight > PageScroll.ActualHeight + 1)
                             throw new InvalidOperationException($"Confirmation unreachable: {width}x{height}");
                         var bottom = new RenderTargetBitmap(width,height,96,96,PixelFormats.Pbgra32); bottom.Render(RootLayout);
                         var bottomEncoder = new PngBitmapEncoder(); bottomEncoder.Frames.Add(BitmapFrame.Create(bottom));
-                        using var bottomStream = File.Create($"artifacts/layout/{width}x{height}-recovery-bottom.png"); bottomEncoder.Save(bottomStream);
+                        using var bottomStream = File.Create($"{folder}/{width}x{height}-recovery-bottom.png"); bottomEncoder.Save(bottomStream);
                     }
                 }
                 source.RootVisual = null;
+            }
             }
             File.WriteAllLines("artifacts/layout-results.txt",report); Close();
         }
@@ -332,7 +416,7 @@ public partial class MainWindow : Window
         if (node is System.Windows.Controls.TextBlock block && block.ActualWidth > 0)
         {
             var bounds = block.TransformToAncestor(container).TransformBounds(new Rect(0,0,block.ActualWidth,block.ActualHeight));
-            if (bounds.Left < -1 || bounds.Right > container.ActualWidth + 1) throw new InvalidOperationException("Text outside content: "+context);
+            if (bounds.Left < -1 || bounds.Right > container.ActualWidth + 1) throw new InvalidOperationException($"Text outside content: {context}; label '{block.Text[..Math.Min(40,block.Text.Length)]}'; {bounds.Left:F1}..{bounds.Right:F1} of {container.ActualWidth:F1}");
         }
         for(int i=0;i<VisualTreeHelper.GetChildrenCount(node);i++) CheckTextBounds(VisualTreeHelper.GetChild(node,i),container,context);
     }
@@ -344,6 +428,7 @@ public partial class MainWindow : Window
         try
         {
             Activate(); Page(ScanPage);
+            await VerifyPreferencesAndKeyboard(checks);
             var payload = Demo.Create(Today.AddYears(-25), Today.AddYears(2), Today.AddYears(-1));
             Receive(payload[..40]);
             Check(Phase.Text == "RECEIVING", "Receiving state");

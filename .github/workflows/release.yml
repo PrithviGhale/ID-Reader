@@ -19,7 +19,7 @@ jobs:
       - name: Choose version
         shell: pwsh
         run: |
-          $version = '1.0.2'
+          $version = '1.0.3'
           if ($env:GITHUB_REF_TYPE -eq 'tag') {
             if ($env:GITHUB_REF_NAME -notmatch '^v(\d+\.\d+\.\d+)$') { throw 'Use a stable version tag such as v1.0.1' }
             $version = $Matches[1]

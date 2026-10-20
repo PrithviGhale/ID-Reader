@@ -1,90 +1,100 @@
 <Window x:Class="AgeCheck.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
- Title="AgeCheck" Width="1080" Height="790" MinWidth="480" MinHeight="480" WindowStartupLocation="CenterScreen" Background="#F3F5FA" Foreground="#19243D" FontFamily="Segoe UI" FontSize="14" UseLayoutRounding="True" TextOptions.TextFormattingMode="Display">
- <Grid x:Name="RootLayout">
+ Title="AgeCheck" Width="1080" Height="860" MinWidth="480" MinHeight="480" WindowStartupLocation="CenterScreen" Background="{DynamicResource Canvas}" Foreground="{DynamicResource Ink}" FontFamily="Segoe UI" FontSize="14" UseLayoutRounding="True" TextOptions.TextFormattingMode="Display">
+ <Grid x:Name="RootLayout" Background="{DynamicResource Canvas}">
   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-  <Border Background="#17233C" Padding="22,15">
-   <WrapPanel VerticalAlignment="Center">
-    <StackPanel Orientation="Horizontal" Margin="0,0,26,6" VerticalAlignment="Center">
-     <Border Width="34" Height="34" Background="#8FAEFF" CornerRadius="10"><TextBlock Text="A" Foreground="#17233C" FontSize="23" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
-     <TextBlock Text="AgeCheck" Foreground="White" FontSize="23" FontWeight="SemiBold" Margin="10,0,0,0" VerticalAlignment="Center"/>
-    </StackPanel>
-    <Button x:Name="ScanNav" Content="Scan ID" Click="ScanPage_Click" Background="#334971" Foreground="White" Padding="17,10" Margin="0,0,6,6"/>
-    <Button x:Name="SetupNav" Content="Scanner setup" Click="SetupPage_Click" Background="#17233C" Foreground="#CDD8EE" Padding="17,10" Margin="0,0,6,6"/>
-    <Button x:Name="UpdatesNav" Content="Updates" Click="UpdatesPage_Click" Background="#17233C" Foreground="#CDD8EE" Padding="17,10" Margin="0,0,0,6"/>
-   </WrapPanel>
+  <Border BorderBrush="{DynamicResource Line}" BorderThickness="0,0,0,1" Background="{DynamicResource Surface}" Padding="24,18,24,12">
+   <StackPanel>
+    <Grid Margin="0,0,0,17"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+     <StackPanel Orientation="Horizontal"><Border x:Name="BrandMark" Width="37" Height="37" Background="{DynamicResource Accent}" CornerRadius="12"><TextBlock Text="A" Foreground="{DynamicResource AccentInk}" FontSize="26" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border><StackPanel Margin="11,0,0,0"><TextBlock Text="AgeCheck" FontSize="21" FontWeight="SemiBold"/><TextBlock Text="A little clarity at the counter." Style="{StaticResource Caption}" FontSize="10"/></StackPanel></StackPanel>
+     <Border x:Name="LocalBadge" Grid.Column="1" Background="{DynamicResource AccentSoft}" CornerRadius="16" Padding="12,8" VerticalAlignment="Center"><TextBlock Text="●  LOCAL &amp; PRIVATE" Foreground="{DynamicResource AccentText}" FontSize="10" FontWeight="Bold"/></Border>
+    </Grid>
+    <WrapPanel>
+     <Button x:Name="ScanNav" Content="Scan" Click="ScanPage_Click" Padding="22,9" Margin="0,0,6,3"/>
+     <Button x:Name="SetupNav" Content="Setup" Click="SetupPage_Click" Padding="22,9" Margin="0,0,6,3"/>
+     <Button x:Name="UpdatesNav" Content="Updates" Click="UpdatesPage_Click" Padding="22,9" Margin="0,0,6,3"/>
+     <Button x:Name="SettingsNav" Content="Settings" Click="SettingsPage_Click" Padding="22,9" Margin="0,0,0,3"/>
+    </WrapPanel>
+   </StackPanel>
   </Border>
   <ScrollViewer x:Name="PageScroll" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" CanContentScroll="False">
-   <Grid x:Name="PageHost" Margin="32,24" MaxWidth="1120" HorizontalAlignment="Stretch">
+   <Grid x:Name="PageHost" Margin="34,26" MaxWidth="1080" HorizontalAlignment="Stretch">
     <StackPanel x:Name="ScanPage">
-     <TextBlock Text="AGE &amp; EXPIRATION" FontSize="11" FontWeight="Bold" Foreground="#62718D"/>
-     <TextBlock Text="A clear check. A simple next step." FontSize="25" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,5,0,20"/>
-     <Border x:Name="ResultCard" Background="White" CornerRadius="18" BorderBrush="#DCE3EF" BorderThickness="1" Padding="26">
+     <TextBlock Text="Ready when you are." Style="{StaticResource PageHeading}"/>
+     <TextBlock Text="Scan the barcode. Compare the card. Clear for the next customer." Style="{StaticResource Caption}" Margin="0,0,0,24"/>
+     <Border x:Name="ResultCard" Style="{StaticResource Card}">
       <StackPanel>
-       <WrapPanel Margin="0,0,0,20"><Border Background="#EDF2FB" CornerRadius="6" Padding="9,5" Margin="0,0,10,5"><TextBlock x:Name="Phase" Text="READY TO SCAN" FontSize="10" FontWeight="Bold" Foreground="#4D6289"/></Border><TextBlock x:Name="DemoBadge" Text="DEMO · MADE-UP DATA" Foreground="#986212" FontWeight="Bold" FontSize="11" Visibility="Collapsed" VerticalAlignment="Center" Margin="0,0,0,5"/></WrapPanel>
+       <WrapPanel Margin="0,0,0,24"><Border Background="{DynamicResource AccentSoft}" CornerRadius="7" Padding="10,6" Margin="0,0,10,5"><TextBlock x:Name="Phase" Text="READY TO SCAN" Foreground="{DynamicResource AccentText}" FontSize="10" FontWeight="Bold"/></Border><TextBlock x:Name="DemoBadge" Text="DEMO · MADE-UP DATA" Foreground="{DynamicResource WarmInk}" FontWeight="Bold" FontSize="11" Visibility="Collapsed" VerticalAlignment="Center" Margin="0,0,0,5"/></WrapPanel>
        <Grid x:Name="ResultLayout">
-        <Grid.ColumnDefinitions><ColumnDefinition x:Name="ResultTextColumn" Width="*"/><ColumnDefinition x:Name="ResultDatesColumn" Width="280"/></Grid.ColumnDefinitions>
+        <Grid.ColumnDefinitions><ColumnDefinition x:Name="ResultTextColumn" Width="*"/><ColumnDefinition x:Name="ResultDatesColumn" Width="268"/></Grid.ColumnDefinitions>
         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-        <StackPanel x:Name="ResultSummary" Margin="0,0,24,0">
-         <Border x:Name="SymbolBox" Width="54" Height="54" Background="#EDF2FF" CornerRadius="16" HorizontalAlignment="Left" Margin="0,0,0,15"><TextBlock x:Name="Symbol" Text="↗" FontSize="30" Foreground="#416BC2" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
-         <TextBlock x:Name="Headline" Text="Ready to scan" FontSize="34" FontWeight="SemiBold" TextWrapping="Wrap"/>
-         <TextBlock x:Name="ResultSubtitle" Text="Place the barcode in the scanner's view." FontSize="16" Foreground="#4D6082" TextWrapping="Wrap" Margin="0,6,0,0"/>
-         <TextBlock x:Name="Detail" Text="Keep this window active. Your result will appear here." FontSize="14" Foreground="#69758B" TextWrapping="Wrap" LineHeight="22" Margin="0,13,0,0"/>
+        <StackPanel x:Name="ResultSummary" Margin="0,0,28,0">
+         <Border x:Name="SymbolBox" Width="74" Height="74" Background="{DynamicResource AccentSoft}" CornerRadius="25" HorizontalAlignment="Left" Margin="0,0,0,22"><TextBlock x:Name="Symbol" Text="⌁" FontSize="42" Foreground="{DynamicResource AccentText}" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
+         <TextBlock x:Name="Headline" Text="Ready to scan" FontSize="38" FontWeight="SemiBold"/>
+         <TextBlock x:Name="ResultSubtitle" Text="Aim at the barcode on the back of the card." FontSize="16" Foreground="{DynamicResource Muted}" Margin="0,8,0,0"/>
+         <TextBlock x:Name="Detail" Text="Keep this window active. Your result appears here." FontSize="13" Foreground="{DynamicResource Muted}" LineHeight="21" Margin="0,15,0,0"/>
         </StackPanel>
-        <Border x:Name="DatesPanel" Grid.Column="1" Background="#F5F7FC" CornerRadius="12" Padding="20" VerticalAlignment="Top">
+        <Border x:Name="DatesPanel" Grid.Column="1" Background="{DynamicResource Inset}" CornerRadius="16" BorderBrush="{DynamicResource Line}" BorderThickness="1" Padding="22" VerticalAlignment="Top">
          <StackPanel>
-          <TextBlock Text="COMPARE WITH THE CARD" FontSize="10" Foreground="#657490" FontWeight="Bold" Margin="0,0,0,20"/>
-          <TextBlock Text="Date of birth" Foreground="#657490" FontSize="12"/>
-          <TextBlock x:Name="BirthLabel" Text="—" FontSize="23" FontWeight="SemiBold" Margin="0,4,0,16" TextWrapping="Wrap"/>
-          <Border Height="1" Background="#DEE5F1" Margin="0,0,0,16"/>
-          <TextBlock Text="Expiration date" Foreground="#657490" FontSize="12"/>
-          <TextBlock x:Name="ExpiryLabel" Text="—" FontSize="23" FontWeight="SemiBold" Margin="0,4,0,0" TextWrapping="Wrap"/>
+          <TextBlock Text="CHECK AGAINST THE CARD" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource Muted}" Margin="0,0,0,23"/>
+          <TextBlock Text="Date of birth" Style="{StaticResource Caption}"/>
+          <TextBlock x:Name="BirthLabel" Text="—" FontSize="24" FontWeight="SemiBold" Margin="0,5,0,20"/>
+          <Border Height="1" Background="{DynamicResource Line}" Margin="0,0,0,20"/>
+          <TextBlock Text="Expiration date" Style="{StaticResource Caption}"/>
+          <TextBlock x:Name="ExpiryLabel" Text="—" FontSize="24" FontWeight="SemiBold" Margin="0,5,0,0"/>
          </StackPanel>
         </Border>
        </Grid>
-       <Border x:Name="RecoveryNotice" Background="#FFF6E7" BorderBrush="#F0D5A6" BorderThickness="1" CornerRadius="10" Padding="15" Margin="0,22,0,0" Visibility="Collapsed">
-        <StackPanel><TextBlock Text="Confirm the printed dates" FontWeight="SemiBold" Foreground="#82531B"/><TextBlock Text="Both dates must match the physical card. This checks the dates only; the full barcode could not be verified." Foreground="#82531B" TextWrapping="Wrap" Margin="0,5,0,12"/><Button x:Name="ConfirmDatesButton" Content="Both dates match the card" Click="ConfirmDates_Click" Background="#82531B" Foreground="White" HorizontalAlignment="Left"/></StackPanel>
+       <Border x:Name="RecoveryNotice" Background="{DynamicResource Warm}" CornerRadius="12" Padding="18" Margin="0,24,0,0" Visibility="Collapsed">
+        <StackPanel><TextBlock Text="One quick comparison" FontWeight="SemiBold" Foreground="{DynamicResource WarmInk}"/><TextBlock Text="Check both displayed dates against the printed card before continuing. The scanner changed the barcode formatting." Foreground="{DynamicResource WarmInk}" Margin="0,6,0,15"/><Button x:Name="ConfirmDatesButton" Content="Both dates match the card" Click="ConfirmDates_Click" Background="{DynamicResource WarmInk}" Foreground="{DynamicResource Canvas}" HorizontalAlignment="Left"/></StackPanel>
        </Border>
-       <Border BorderBrush="#E7ECF4" BorderThickness="0,1,0,0" Margin="0,24,0,0" Padding="0,18,0,0">
-        <WrapPanel><Button x:Name="ClearButton" Content="Next customer  →" Click="Clear_Click" Background="#3564D8" Foreground="White" Margin="0,0,18,8"/><TextBlock Text="Clears after 30 seconds&#10;and when you leave this window" FontSize="11" Foreground="#738099" VerticalAlignment="Center" Margin="0,0,0,8"/></WrapPanel>
+       <Border BorderBrush="{DynamicResource Line}" BorderThickness="0,1,0,0" Margin="0,27,0,0" Padding="0,20,0,0">
+        <WrapPanel><Button x:Name="ClearButton" Content="Next customer   →" Click="Clear_Click" Background="{DynamicResource Accent}" Foreground="{DynamicResource AccentInk}" Margin="0,0,18,8"/><TextBlock Text="Auto-clears after 30 seconds&#10;and when you leave the window" Style="{StaticResource Caption}" FontSize="11" VerticalAlignment="Center" Margin="0,0,0,8"/></WrapPanel>
        </Border>
       </StackPanel>
      </Border>
-     <WrapPanel Margin="0,18,0,6"><TextBlock Text="TRY A DEMO" FontSize="10" FontWeight="Bold" Foreground="#738099" VerticalAlignment="Center" Margin="0,0,14,8"/><Button Content="21+" Click="AdultDemo_Click" Padding="16,9" Margin="0,0,8,8"/><Button Content="Under 21" Click="YoungDemo_Click" Padding="16,9" Margin="0,0,8,8"/><Button Content="Expired" Click="ExpiredDemo_Click" Padding="16,9" Margin="0,0,8,8"/><Button Content="Scanner recovery" Click="RecoveryDemo_Click" Padding="16,9" Margin="0,0,0,8"/></WrapPanel>
-     <TextBlock Text="Local processing · No saved scan history · USB keyboard input" Foreground="#738099" FontSize="11" TextWrapping="Wrap"/>
-     <TextBlock Text="Scanner connection is not detected in keyboard mode." Foreground="#738099" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"/>
+     <WrapPanel Margin="0,20,0,4"><TextBlock Text="TRY IT" Style="{StaticResource Caption}" FontSize="10" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,15,8"/><Button Content="21+" Click="AdultDemo_Click" Padding="16,9" Margin="0,0,8,8"/><Button Content="Under 21" Click="YoungDemo_Click" Padding="16,9" Margin="0,0,8,8"/><Button Content="Expired" Click="ExpiredDemo_Click" Padding="16,9" Margin="0,0,8,8"/><Button Content="Scanner sample" Click="RecoveryDemo_Click" Padding="16,9" Margin="0,0,0,8"/></WrapPanel>
+     <TextBlock Text="No scan history. No cloud processing. USB keyboard input." Style="{StaticResource Caption}" FontSize="11"/>
+     <TextBlock Text="Scanner connection is not detected in keyboard mode." Style="{StaticResource Caption}" FontSize="11" Margin="0,4,0,0"/>
     </StackPanel>
     <StackPanel x:Name="SetupPage" Visibility="Collapsed">
-     <TextBlock Text="Scanner setup" FontSize="28" FontWeight="SemiBold" Margin="0,0,0,18"/>
-     <Border Background="White" CornerRadius="18" Padding="24" BorderBrush="#DCE3EF" BorderThickness="1"><StackPanel>
-      <TextBlock Text="Honeywell Xenon XP 1950g" FontSize="20" FontWeight="SemiBold"/>
-      <TextBlock Text="1. Use USB PC Keyboard mode" FontWeight="SemiBold" Margin="0,22,0,8"/>
-      <TextBlock Text="Enable PDF417 and match the scanner keyboard country to Windows. Use the manual for your scanner model and firmware." TextWrapping="Wrap"/>
-      <TextBlock Text="2. Keep the header and line separators" FontWeight="SemiBold" Margin="0,22,0,8"/>
-      <TextBlock Text="For full barcode validation, enable Control Character Output using text such as [LF], [CR] and [RS]. Turn off data editing and extra prefixes. A ]L0 prefix and trailing Enter or Tab are supported." TextWrapping="Wrap"/>
-      <TextBlock Text="3. If the scanner sends one long line" FontWeight="SemiBold" Margin="0,22,0,8"/>
-      <TextBlock Text="AgeCheck can recover unique birth, expiration and issue dates with a USA or CAN country field from supported scanner text. Compare the displayed dates with the card and press Both dates match the card. Missing or conflicting dates still require manual review." TextWrapping="Wrap"/>
-      <TextBlock Text="4. Scan with this window active" FontWeight="SemiBold" Margin="0,22,0,8"/>
-      <TextBlock Text="Return to Scan ID. AgeCheck waits for 700 ms of silence; internal line breaks never submit a scan. A beep is only a decode signal, not proof that all data arrived. Never share real ID data in support reports." TextWrapping="Wrap"/>
+     <TextBlock Text="A better first scan." Style="{StaticResource PageHeading}"/><TextBlock Text="Set up once, then keep the counter moving." Style="{StaticResource Caption}" Margin="0,0,0,24"/>
+     <Border Style="{StaticResource Card}"><StackPanel>
+      <TextBlock Text="Honeywell Xenon XP 1950g" FontSize="22" FontWeight="SemiBold"/>
+      <TextBlock Text="01   Match the keyboard" Foreground="{DynamicResource AccentText}" FontWeight="SemiBold" Margin="0,25,0,8"/><TextBlock Text="Use USB PC Keyboard mode, enable PDF417, and match the scanner keyboard country to Windows. A mismatch can change characters or combine accents in the header." Foreground="{DynamicResource Muted}"/>
+      <TextBlock Text="02   Preserve the whole barcode" Foreground="{DynamicResource AccentText}" FontWeight="SemiBold" Margin="0,25,0,8"/><TextBlock Text="Enable Control Character Output using text such as [LF], [CR] and [RS] for full validation. Turn off data editing and extra prefixes. Use the manual for your firmware." Foreground="{DynamicResource Muted}"/>
+      <TextBlock Text="03   If your scanner sends one long line" Foreground="{DynamicResource AccentText}" FontWeight="SemiBold" Margin="0,25,0,8"/><TextBlock Text="Supported flattened headers and the known accented header variation can use date recovery. Compare the displayed dates with the printed card, then confirm. Missing or conflicting dates still require manual review." Foreground="{DynamicResource Muted}"/>
+      <TextBlock Text="04   Keep AgeCheck active" Foreground="{DynamicResource AccentText}" FontWeight="SemiBold" Margin="0,25,0,8"/><TextBlock Text="Open Scan. The app waits for 700 ms of silence; a line break never submits early. A beep only means the scanner decoded something. Never share real ID barcodes in a support report." Foreground="{DynamicResource Muted}"/>
      </StackPanel></Border>
     </StackPanel>
     <StackPanel x:Name="UpdatesPage" Visibility="Collapsed">
-     <TextBlock Text="App updates" FontSize="28" FontWeight="SemiBold" Margin="0,0,0,18"/>
-     <Border Background="White" CornerRadius="18" Padding="24" BorderBrush="#DCE3EF" BorderThickness="1"><StackPanel>
-      <TextBlock Text="The latest AgeCheck, on your schedule." FontSize="20" FontWeight="SemiBold" TextWrapping="Wrap"/>
-      <TextBlock x:Name="UpdateStatus" Text="Check for stable releases from the official repository." Margin="0,16,0,22" TextWrapping="Wrap"/>
-      <CheckBox x:Name="StartupChecks" IsChecked="True" Click="StartupChecks_Click" Margin="0,0,0,24"><TextBlock Text="Check for updates when AgeCheck starts" TextWrapping="Wrap"/></CheckBox>
-      <WrapPanel><Button x:Name="CheckButton" Content="Check for updates" Click="CheckUpdates_Click" Margin="0,0,10,10"/><Button x:Name="DownloadButton" Content="Download update" Click="Download_Click" IsEnabled="False" Margin="0,0,10,10"/><Button x:Name="RestartButton" Content="Update and restart" Click="Restart_Click" IsEnabled="False" Margin="0,0,0,10"/></WrapPanel>
-      <ProgressBar x:Name="DownloadProgress" Minimum="0" Maximum="100" Height="6" Margin="0,10,0,20" Foreground="#3564D8"/>
-      <TextBlock Text="WHAT'S NEW" FontSize="11" FontWeight="Bold" Foreground="#657490"/>
-      <TextBlock x:Name="ReleaseNotes" Text="No update selected." Margin="0,12,0,24" TextWrapping="Wrap"/>
-      <Button Content="Later — return to scanning" Click="ScanPage_Click" HorizontalAlignment="Left"/>
-      <TextBlock Text="Downloads run in the background. Restart is always your choice. Offline scanning continues if update checks fail." Foreground="#657490" Margin="0,24,0,0" TextWrapping="Wrap"/>
+     <TextBlock Text="Fresh features. Your timing." Style="{StaticResource PageHeading}"/><TextBlock Text="Download in the background. Restart when the counter is clear." Style="{StaticResource Caption}" Margin="0,0,0,24"/>
+     <Border Style="{StaticResource Card}"><StackPanel>
+      <TextBlock Text="AgeCheck for Windows" FontSize="22" FontWeight="SemiBold"/>
+      <TextBlock x:Name="UpdateStatus" Text="Check for stable releases from the official repository." Foreground="{DynamicResource Muted}" Margin="0,14,0,24"/>
+      <CheckBox x:Name="StartupChecks" IsChecked="True" Click="StartupChecks_Click" Margin="0,0,0,22"><TextBlock Text="Check for updates at startup"/></CheckBox>
+      <WrapPanel><Button x:Name="CheckButton" Content="Check for updates" Click="CheckUpdates_Click" Background="{DynamicResource Accent}" Foreground="{DynamicResource AccentInk}" Margin="0,0,10,10"/><Button x:Name="DownloadButton" Content="Download update" Click="Download_Click" IsEnabled="False" Margin="0,0,10,10"/><Button x:Name="RestartButton" Content="Update and restart" Click="Restart_Click" IsEnabled="False" Margin="0,0,0,10"/></WrapPanel>
+      <ProgressBar x:Name="DownloadProgress" Minimum="0" Maximum="100" Height="5" Margin="0,10,0,24" Foreground="{DynamicResource Accent}" Background="{DynamicResource Quiet}" BorderThickness="0"/>
+      <TextBlock Text="RELEASE NOTES" Style="{StaticResource Caption}" FontSize="10" FontWeight="Bold"/>
+      <TextBlock x:Name="ReleaseNotes" Text="No update selected." Foreground="{DynamicResource Muted}" Margin="0,12,0,24"/>
+      <Button Content="Later — back to scanning" Click="ScanPage_Click" HorizontalAlignment="Left"/>
+     </StackPanel></Border>
+    </StackPanel>
+    <StackPanel x:Name="SettingsPage" Visibility="Collapsed">
+     <TextBlock Text="Make it feel like yours." Style="{StaticResource PageHeading}"/><TextBlock Text="Small preferences. A more comfortable workday." Style="{StaticResource Caption}" Margin="0,0,0,24"/>
+     <Border Style="{StaticResource Card}"><StackPanel>
+      <TextBlock Text="Appearance" FontSize="22" FontWeight="SemiBold"/><TextBlock Text="Choose the look that suits your counter." Foreground="{DynamicResource Muted}" Margin="0,7,0,20"/>
+      <WrapPanel><Button x:Name="LightThemeButton" Content="☀  Light" Click="LightTheme_Click" Padding="28,18" Margin="0,0,12,12"/><Button x:Name="DarkThemeButton" Content="☾  Dark" Click="DarkTheme_Click" Padding="28,18" Margin="0,0,0,12"/></WrapPanel>
+      <Border Height="1" Background="{DynamicResource Line}" Margin="0,16,0,24"/>
+      <TextBlock Text="Motion" FontSize="22" FontWeight="SemiBold"/><TextBlock Text="A brief opening reveal and gentle transitions between pages." Foreground="{DynamicResource Muted}" Margin="0,7,0,20"/>
+      <CheckBox x:Name="MotionEnabled" IsChecked="True" Click="MotionEnabled_Click"><TextBlock Text="Enable animations"/></CheckBox>
+      <TextBlock Text="Animations also respect your Windows animation setting. They stop when each transition finishes." Style="{StaticResource Caption}" Margin="0,13,0,24"/>
+      <TextBlock x:Name="SettingsStatus" Text="Preferences save on this PC. ID data is never saved." Foreground="{DynamicResource Muted}"/>
      </StackPanel></Border>
     </StackPanel>
    </Grid>
   </ScrollViewer>
-  <Border Grid.Row="2" Background="White" BorderBrush="#DCE3EF" BorderThickness="0,1,0,0" Padding="22,12">
-   <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><StackPanel><TextBlock Text="ID authenticity not verified." FontWeight="SemiBold" FontSize="12"/><TextBlock Text="Compare the card, photograph and customer. A barcode result does not approve a sale." Foreground="#738099" FontSize="11" TextWrapping="Wrap" Margin="0,3,14,0"/></StackPanel><TextBlock x:Name="VersionLabel" Grid.Column="1" Foreground="#738099" FontSize="10" VerticalAlignment="Center"/></Grid>
+  <Border Grid.Row="2" Background="{DynamicResource Surface}" BorderBrush="{DynamicResource Line}" BorderThickness="0,1,0,0" Padding="24,13">
+   <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><StackPanel><TextBlock Text="ID authenticity not verified." FontWeight="SemiBold" FontSize="12"/><TextBlock Text="Compare the printed card, photograph and customer. A barcode result does not approve a sale." Style="{StaticResource Caption}" FontSize="10" Margin="0,4,12,0"/></StackPanel><TextBlock x:Name="VersionLabel" Grid.Column="1" Style="{StaticResource Caption}" FontSize="10" VerticalAlignment="Center"/></Grid>
   </Border>
  </Grid>
 </Window>

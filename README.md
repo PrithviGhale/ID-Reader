@@ -30,6 +30,8 @@ A simple Windows app for checking the birth date and expiration date in an ID ba
 | **Works offline** | No internet is needed to check a scan. |
 | **Built-in updates** | Check for updates, read what's new, download, and restart when you choose. |
 | **Simple, smooth design** | A clean Windows interface with short animations and no constantly running effects. |
+| **Light and dark modes** | Choose your preferred look in Settings. Your choice stays on this PC. |
+| **Opening and page animations** | A short opening reveal and smooth page changes, with a setting to turn them off. |
 | **Flexible layout** | Adjusts to small windows, laptops, large monitors, and Windows display scaling. Scroll to reach extra content on small screens. |
 | **Demo mode** | Try made-up examples without scanning an ID. Each demo is clearly marked. |
 
@@ -53,7 +55,7 @@ AgeCheck supports selected US and Canadian AAMVA barcode formats, versions 08–
 
 ### If your scanner sends one long line
 
-Version **1.0.2** can recover unique date and country fields from supported flattened scanner output, including a missing header or first field character. Instead of stopping at a header error, it shows **Check the printed dates**. Compare both dates with the physical ID, then choose **Both dates match the card**. The app calculates the age and expiration result from those confirmed dates.
+Version **1.0.3** recovers unique date and country fields from supported flattened scanner output, including the specific `@ÂNSI` header variation, missing separators, or a missing header/first field character. Instead of stopping at that header error, it shows **Check the printed dates**. Compare both dates with the physical ID, then choose **Both dates match the card**. The app calculates the age and expiration result from those confirmed dates.
 
 This is a **date-only check**. Missing separators mean the app cannot prove the whole barcode arrived. It never gives an automatic pass from recovered text. Missing, invalid, or conflicting dates still need manual review. For full barcode validation, use the recommended [scanner settings](docs/SCANNER_SETUP.md).
 
@@ -61,6 +63,19 @@ This is a **date-only check**. Missing separators mean the app cannot prove the 
 <summary>See the new scanner recovery screen</summary>
 
 ![Scanner recovery with synthetic dates and a printed-card confirmation button](docs/images/recovery.png)
+
+</details>
+
+## Light or dark. Your choice.
+
+Open **Settings** and choose **Light** or **Dark**. You can also turn animations off. Preferences save automatically. The opening reveal and page transitions finish in under half a second and respect the Windows animation setting.
+
+![AgeCheck in light mode](docs/images/light.png)
+
+<details>
+<summary>See appearance and animation settings</summary>
+
+![AgeCheck settings with dark mode and animation controls](docs/images/settings.png)
 
 </details>
 
@@ -85,6 +100,8 @@ dotnet run --project src/AgeCheck
 ```
 
 **[Build and publish updates](docs/RELEASING.md)** · **[Technical details](docs/TECHNICAL.md)** · **[Validation](docs/VALIDATION.md)**
+
+[Scanner research and references](docs/SCANNER_RESEARCH.md)
 
 Pushing code does not update installed apps. Publishing a new versioned release makes an update available.
 
