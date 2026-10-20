@@ -35,7 +35,7 @@ Want to try it without installing? Use `AgeCheck-win-x64-Portable.zip`. The port
 | --- | --- |
 | **AgeCheck-win-x64-Setup.exe** | **Recommended.** Installs AgeCheck with built-in updates. |
 | AgeCheck-win-x64-Portable.zip | Try the app without installing. No in-app updates. |
-| `.nupkg`, `RELEASES-win-x64`, and `.json` files | Used by the updater. You do not need to open these. |
+| `.nupkg` and `.json` files | Used by the updater. You do not need to open these. |
 | Source code | For people who want to build or change the app. |
 
 ## Before using it
