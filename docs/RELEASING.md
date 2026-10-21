@@ -5,7 +5,7 @@
 Install the .NET 10 SDK on Windows x64, then run:
 
 ```powershell
-./scripts/package.ps1 -Version 1.1.0
+./scripts/package.ps1 -Version 1.1.1
 ```
 
 The script restores the pinned Velopack tool, runs tests, publishes a self-contained Windows app and packages all assets under `artifacts/releases/`. No SDK or separate runtime is required on the customer's machine. Full update packages are used; delta packages are an optional future optimization.
@@ -14,17 +14,17 @@ The script restores the pinned Velopack tool, runs tests, publishes a self-conta
 
 1. Make your changes and run the tests.
 2. Update `RELEASE_NOTES.md` to describe the new version.
-3. Commit and push the changes, then push a new version tag:
+3. Increase the numeric `Version` in `Directory.Build.props` to an unused newer version, then commit and push to `main`:
 
 ```powershell
 git add .
-git commit -m "Prepare AgeCheck 1.1.1"
+git commit -m "Prepare the next AgeCheck release"
 git push origin main
-git tag v1.1.1
-git push origin v1.1.1
 ```
 
-The Windows GitHub Actions job tests, builds, packages and publishes the tag as a stable release. It uses the workflow's temporary `GITHUB_TOKEN`; never put a token in the app. Wait for the workflow to finish and inspect the release assets. Every release needs the installer, full `.nupkg`, and generated `releases.win-x64.json` / feed files. Keep the generated filenames and upload all output files. An ordinary push does **not** update installed applications.
+The version-file change on `main` triggers the Windows job, which tests, builds, packages and creates a matching `vMAJOR.MINOR.PATCH` tag/release at that exact commit. It uses the workflow's temporary `GITHUB_TOKEN`; never put a token in the app. Ordinary pushes that do not change the version file do not publish updates. Do not reuse an already-published version. Wait for the workflow and inspect its release assets: the installer, full `.nupkg`, and `releases.win-x64.json` update feed.
+
+Tag-triggered releases remain supported for manual release management, using a new numeric version tag. Use one publishing route per version; do not push a duplicate tag after the version-file workflow has published it. Workflow-dispatch and pull requests build artifacts without publishing.
 
 Only numeric `vMAJOR.MINOR.PATCH` tags are accepted. Increase the version; do not overwrite tags or publish a lower version. Keep `packId`, `channel` and `runtime` in `release-config.json` stable. The same file supplies the trusted repository URL to both the app and publishing script. A fork must deliberately change it before distributing a build; existing installations will continue trusting their configured repository until migrated.
 

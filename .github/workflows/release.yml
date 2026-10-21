@@ -2,10 +2,15 @@ name: Build and release AgeCheck
 on:
   push:
     tags: ['v*']
+    branches: ['main']
+    paths: ['Directory.Build.props']
   pull_request:
   workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: agecheck-release-${{ github.ref }}
+  cancel-in-progress: false
 jobs:
   build:
     runs-on: windows-latest
@@ -19,12 +24,14 @@ jobs:
       - name: Choose version
         shell: pwsh
         run: |
-          $version = '1.1.0'
+          $version = ([xml](Get-Content Directory.Build.props -Raw)).Project.PropertyGroup.Version.InnerText
           if ($env:GITHUB_REF_TYPE -eq 'tag') {
             if ($env:GITHUB_REF_NAME -notmatch '^v(\d+\.\d+\.\d+)$') { throw 'Use a stable version tag such as v1.0.1' }
             $version = $Matches[1]
           }
+          if ($version -notmatch '^\d+\.\d+\.\d+$') { throw 'Set a numeric stable Version in Directory.Build.props' }
           "AGECHECK_VERSION=$version" >> $env:GITHUB_ENV
+          "AGECHECK_TAG=v$version" >> $env:GITHUB_ENV
       - name: Test, build and package
         shell: pwsh
         run: ./scripts/package.ps1 -Version $env:AGECHECK_VERSION
@@ -34,11 +41,11 @@ jobs:
           name: AgeCheck-win-x64
           path: artifacts/releases/*
       - name: Publish versioned release
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'push' && github.ref == 'refs/heads/main')
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           $config = Get-Content release-config.json -Raw | ConvertFrom-Json
-          dotnet vpk upload github --repoUrl $config.repositoryUrl --token $env:GH_TOKEN --publish --releaseName "AgeCheck $env:AGECHECK_VERSION" --tag $env:GITHUB_REF_NAME --channel $config.channel --outputDir artifacts/releases
+          dotnet vpk upload github --repoUrl $config.repositoryUrl --token $env:GH_TOKEN --publish --releaseName "AgeCheck $env:AGECHECK_VERSION" --tag $env:AGECHECK_TAG --targetCommitish $env:GITHUB_SHA --channel $config.channel --outputDir artifacts/releases
           if ($LASTEXITCODE -ne 0) { throw 'Release upload failed' }

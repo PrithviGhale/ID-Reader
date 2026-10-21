@@ -14,6 +14,10 @@ The application also accepts intact literal control characters, but keyboard int
 
 ## Troubleshooting
 
+### Some line breaks remain but the header is still rejected
+
+Version **1.1.1** adds assisted recovery for supported headers where the scanner sends only some of the expected CR/LF/RS separators, including the known accented header after a line break. It also accepts tabs in the assisted field stream. Compare the displayed birth and expiration dates with the physical card before confirming. Other unknown character substitutions or ambiguous fields remain manual review. Correcting the scanner transport is still the way to enable full framing checks.
+
 ### The header shows `@ÂNSI`
 
 Update to **1.0.3**. It recognizes the specific accented-header variation in the assisted recovery path. Keep AgeCheck's **Scan** page active, scan again, compare both displayed dates with the printed card, and confirm if they match. Missing or conflicting dates still need manual review.

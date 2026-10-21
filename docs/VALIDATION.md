@@ -1,5 +1,17 @@
 # Validation record
 
+## Version 1.1.1 keyboard transport regression (October 21, 2026)
+
+- Reproduced the two supplied private scanner strings outside the repository. Both recover the expected birth/expiration dates and names, require printed-date confirmation, and then calculate 21+. The original exact strings already recovered in 1.1.0; its reported header error could not be reproduced from the pasted strings alone.
+- Found and fixed rejection of partially preserved keyboard header separators and accented-header tokens after line breaks. The header is normalized only for assisted recovery; dates, names and countries are not rewritten. Recovery never automatically passes a card.
+- Added synthetic regression tests for mixed separators, unsupported mutations, incomplete inputs, joined cards, duplicate fields and value-encoding changes.
+- Added checks against the public fictional example in Annex D.13 of the AAMVA 2020 standard. The transcribed directory mismatch remains blocked. With a consistent directory, the same fields produce 21+ before expiry and Expired after it. Flattened text with ambiguous marker collisions remains manual review.
+- Private real-ID text stays outside the repository, release assets and public test fixtures. Public tests and screenshots contain synthetic or public specimen data only.
+- **137 core test cases passed.** Debug and Release solution builds completed with **zero compiler warnings and errors**; the reported 167 editor problems were not reproducible in this checkout.
+- The self-contained **1.1.1 packaged application passed its WPF self-test**, including character-by-character mixed key/text input, correct adult/underage outcomes after confirmation, next-customer replacement, focus clearing, the real 30-second privacy timer, history/clipboard behavior and safe uninstalled-update handling. A separate private harness passed both supplied exact streams through WPF routed text events and confirmed their 21+ results.
+- **220 layout cases passed** across two themes and ten viewports; the narrow recovery/confirmation view was visually inspected. Installer, portable archive, full update package and win-x64 feed were built. A short packaged idle sample used **0.0 ms CPU over five seconds** and **244.8 MiB working set**; this is a measurement, not a performance guarantee.
+- Physical Honeywell input and a complete installed-to-installed upgrade remain deployment checks. A build-machine TLS/download restriction was resolved locally by restoring the official runtime packages into the writable workspace; certificate checks were not disabled. GitHub CI uses the standard package sources.
+
 ## Version 1.1.0 names, history and integrated window
 
 - **109 core tests passed.** Added first/last-name extraction, all-caps normalization, truncation/malformed-name protection, optional revision/field-code checks and history replacement/capacity/clearing. A malformed flattened-name test exposed a field-code-as-name bug; the recovery boundary logic was tightened.

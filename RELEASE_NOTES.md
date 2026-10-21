@@ -1,4 +1,12 @@
-# AgeCheck 1.1.0 — Names, history, glowing edges, and a new home
+# AgeCheck 1.1.1 — Keyboard scanner compatibility
+
+- Recover supported keyboard scanner headers when only some line breaks, tabs or record separators survive, including the known composed/decomposed accented header. Recovered scans still require printed-date confirmation.
+- Preserve name/date values during header repair; make the recovered-name comparison reminder explicit.
+- Expanded tests cover transformed transport, incomplete/joined scans and a published AAMVA specimen. Two private supplied barcodes were checked through Windows routed input without being added to this repository.
+- Bumping the version in Directory.Build.props on main now builds and publishes the matching installer and update feed automatically. Existing Setup installations can use App updates.
+- Unsigned Windows x64 release. Physical scanner testing on the deployment PC is still required. ID authenticity is not verified.
+
+## Previous release: AgeCheck 1.1.0 — Names, history, glowing edges, and a new home
 
 **Update inside AgeCheck:** open **☰ → App updates**, check for updates, download, then choose Update and restart. For a fresh install, download **`AgeCheck-win-x64-Setup.exe`** below.
 

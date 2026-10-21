@@ -59,6 +59,46 @@ public partial class MainWindow
         var blocked = new TextCompositionEventArgs(Keyboard.PrimaryDevice,new TextComposition(InputManager.Current,this,sample)) { RoutedEvent=TextCompositionManager.PreviewTextInputEvent };
         RaiseEvent(blocked); Check(!scan.Receiving,"Scanner capture disabled outside Scan page");
         Page(ScanPage);
+        await VerifyScannerTransport(checks);
+    }
+
+    private async Task VerifyScannerTransport(List<string> checks)
+    {
+        void Check(bool ok, string label) { if (!ok) throw new InvalidOperationException(label); checks.Add(label); }
+        foreach (var (header, years, expected) in new[]
+        {
+            ("@\rÂNSI ", 25, "21 or older"),
+            ("@\nANSI ", 19, "Under 21"),
+            ("\r\n@A\u0302NSI ", 22, "21 or older")
+        })
+        {
+            Clear(); Page(ScanPage); Activate();
+            string sample = header + Demo.KeyboardHeader(Today.AddYears(-years), Today.AddYears(3), Today.AddYears(-1))[6..];
+            sample = sample.Replace("DBB", "\tDBB");
+            foreach (char character in sample)
+            {
+                if (character is '\r' or '\n' or '\t')
+                {
+                    var input = new KeyEventArgs(Keyboard.PrimaryDevice, PresentationSource.FromVisual(this), 0,
+                        character == '\t' ? Key.Tab : Key.Enter) { RoutedEvent = Keyboard.PreviewKeyDownEvent };
+                    RaiseEvent(input);
+                }
+                else
+                {
+                    var composition = new TextComposition(InputManager.Current, this, character.ToString());
+                    var input = new TextCompositionEventArgs(Keyboard.PrimaryDevice, composition)
+                        { RoutedEvent = TextCompositionManager.PreviewTextInputEvent };
+                    RaiseEvent(input);
+                    Check(input.Handled, "Scanner character captured on the Scan page");
+                }
+            }
+            await WaitForScanResult();
+            Check(recoveredDates?.NeedsDateConfirmation == true && BirthLabel.Text != "—", "Mixed keyboard separators recover dates through routed key/text events");
+            Check(Headline.Text == "Check the printed dates", "Repaired transport cannot automatically pass");
+            ConfirmDates_Click(this, new RoutedEventArgs());
+            Check(Phase.Text == "DATES CONFIRMED" && Headline.Text == expected, "Routed scan confirmation preserves the correct age outcome");
+        }
+        Clear();
     }
     private static double Contrast(string ink,string surface)
     {

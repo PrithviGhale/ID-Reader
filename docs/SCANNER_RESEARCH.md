@@ -1,5 +1,11 @@
 # Scanner compatibility notes
 
+## Version 1.1.1 transport coverage
+
+The assisted path also recognizes supported header tokens after partial keyboard separators (CR, LF, Tab and RS), with optional `]L0` and the existing missing-`@` case. It canonicalizes only that fixed token and only in recovery. Mixed field separators are removed for the assisted calculation; strict byte-offset validation remains unchanged. Unknown accent mutations, unexpected controls, changed personal values, ambiguous fields, malformed dates and multiple cards remain review cases.
+
+The exact two supplied private strings recovered on the current code and in character-by-character WPF routed input tests. A supported name is shown with a printed-name comparison reminder. Those private strings are not included in public fixtures. A public fictional example from AAMVA Annex D.13 was also checked, including mismatched directory lengths, corrected framing and expired-date behavior. The original screenshot's header failure was not reproducible from its pasted string alone; actual scanner output on the deployment PC still needs testing.
+
 Reviewed October 19–20, 2026. Tests and screenshots use synthetic IDs only.
 
 ## References

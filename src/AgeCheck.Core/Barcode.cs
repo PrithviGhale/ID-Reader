@@ -22,16 +22,9 @@ public static partial class Barcode
         if (raw.Length > InputLimit) return Bad("Input limit exceeded. Clear and rescan.");
         var text = Normalize(raw);
         if (text.StartsWith("]L0", StringComparison.Ordinal)) text = text[3..];
-        // Some keyboard-wedge/dead-key layouts combine the header A with a circumflex.
-        // Repair ONLY that fixed header token, and only for assisted recovery.
-        if (allowScannerRecovery)
-        {
-            if (text.StartsWith("@ÂNSI ", StringComparison.Ordinal)) text = "@ANSI " + text[6..];
-            else if (text.StartsWith("@A\u0302NSI ", StringComparison.Ordinal)) text = "@ANSI " + text[7..];
-        }
-        if (text.Any(c => c > 127)) return Bad("Unsupported character encoding. Match the scanner keyboard layout to Windows and rescan.");
         if (!text.StartsWith("@\n\u001e\rANSI ", StringComparison.Ordinal))
             return allowScannerRecovery ? RecoverScannerDates(text, today) : Bad("Unsupported barcode header or altered control characters. Check scanner setup.");
+        if (text.Any(c => c > 127)) return Bad("Unsupported character encoding. Match the scanner keyboard layout to Windows and rescan.");
         if (text.Length < 21 || !Digits().IsMatch(text.Substring(9, 12))) return Bad("Incomplete or malformed AAMVA header.");
         var version = text.Substring(15, 2);
         if (version is not ("08" or "09" or "10")) return Bad("Unsupported AAMVA version. Supported versions: 08, 09 and 10.");
@@ -102,6 +95,12 @@ public static partial class Barcode
     private static CheckResult RecoverScannerDates(string text, DateOnly today)
     {
         CheckResult Bad(string detail) => new(Outcome.Review, detail);
+        // Normalize only the fixed header token, never identity/date values. Keyboard
+        // transport may preserve some separators and drop others, or compose a dead key.
+        // A repaired header always stays in assisted recovery, never strict validation.
+        var header = RecoveryHeader().Match(text);
+        if (header.Success) text = "@ANSI " + text[header.Length..];
+        if (text.Any(c => c > 127)) return Bad("Unsupported character encoding. Match the scanner keyboard layout to Windows and rescan.");
         // A keyboard scanner can strip separators, the header, and even the first D.
         // Recovery is an operator-assisted date check, NEVER full-frame validation.
         bool nameStart = text.StartsWith("DCS", StringComparison.Ordinal) || text.StartsWith("CS", StringComparison.Ordinal)
@@ -109,8 +108,9 @@ public static partial class Barcode
         bool flatHeader = Regex.IsMatch(text, @"^@?ANSI [0-9]{6}(08|09|10)[0-9]{4}", RegexOptions.CultureInvariant);
         if (!nameStart && !flatHeader) return Bad("The scanner did not send a supported header. Check Scanner setup and scan again.");
         text = text.TrimEnd('\r', '\n', '\t', '\u0003');
-        if (text.Any(c => char.IsControl(c) && c is not ('\r' or '\n'))) return Bad("Unexpected scanner control characters. Rescan or check manually.");
-        text = text.Replace("\r", "").Replace("\n", "");
+        if (text.Any(c => char.IsControl(c) && c is not ('\r' or '\n' or '\t' or '\u001e')))
+            return Bad("Unexpected scanner control characters. Rescan or check manually.");
+        text = text.Replace("\r", "").Replace("\n", "").Replace("\t", "").Replace("\u001e", "");
         var recovered = new Dictionary<string, string>();
         foreach (var key in new[] { "DCG", "DBB", "DBA", "DBD", "DDH", "DDI", "DDJ", "DDB", "DBC", "DDA", "DDE", "DDF", "DDG" })
         {
@@ -130,6 +130,7 @@ public static partial class Barcode
         var result = Check($"@\n\u001e\rANSI 636000100001DL0031{body.Length:D4}{body}", today);
         if (result.Outcome == Outcome.Review) return result;
         return result with { Outcome = Outcome.Review, NeedsDateConfirmation = true,
+            NameNote = result.DisplayName == null ? result.NameNote : "Recovered name: compare it with the printed card before copying.",
             Detail = "Dates recovered from scanner text. Formatting is incomplete, so full barcode checks are unavailable. Compare both dates with the printed card, then confirm below." };
     }
 
@@ -184,4 +185,6 @@ public static partial class Barcode
 
     [GeneratedRegex("^[0-9]+$", RegexOptions.CultureInvariant)] private static partial Regex Digits();
     [GeneratedRegex("^[A-Z]{3}$", RegexOptions.CultureInvariant)] private static partial Regex FieldCode();
+    [GeneratedRegex(@"\A[\r\n\t\x1e]*(?:\]L0[\r\n\t\x1e]*)?@?[\r\n\t\x1e]*(?:ANSI|ÂNSI|A\u0302NSI) ", RegexOptions.CultureInvariant)]
+    private static partial Regex RecoveryHeader();
 }

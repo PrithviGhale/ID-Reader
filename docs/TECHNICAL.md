@@ -14,6 +14,10 @@ Clearing removes application references and visible data; .NET garbage collectio
 
 ## Supported barcode subset
 
+### Keyboard transport in 1.1.1
+
+Assisted recovery accepts the known fixed header spellings with partially preserved header/field separators. Only the fixed header token is repaired. It never changes personal values, loosens strict framing checks, or automatically passes a recovered scan. The recovered-name note explicitly requests comparison with the card. The reported exact strings already recovered in 1.1.0, but previously unsupported mixed-separator variants now recover too.
+
 ### Names, checks and history in 1.1.0
 
 Strict fields use DAC/DCS for first/last names, with DDE/DDF truncation flags respected when present. Flattened recovery requires unambiguous standard field boundaries and rejects field-code fragments masquerading as a name. Names are normalized to uppercase and exclude DAD middle names. Missing, truncated or ambiguous values are not copied as complete names.
@@ -58,7 +62,7 @@ Open **App updates** to check for stable releases, read release notes, download 
 
 Updates use Velopack's `GithubSource` and package verification, over HTTPS, from this public repository. No tokens are embedded. Development and portable copies explain that the Setup installer is required for in-app updates.
 
-**Pushing ordinary code does not update installed apps. Publishing a new versioned GitHub release does.** See the [release guide](RELEASING.md). The repository URL and package identity live in one place: [`release-config.json`](../release-config.json).
+**Publishing a new versioned GitHub release makes an update available.** The release job now runs when `Version` in `Directory.Build.props` changes on `main`, or for a new numeric version tag. The version-file route creates its tag at the exact build commit. Ordinary pushes without that file change do not publish. See the [release guide](RELEASING.md). The repository URL and package identity live in one place: [`release-config.json`](../release-config.json).
 
 ## Build and test
 

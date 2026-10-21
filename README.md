@@ -59,6 +59,8 @@ AgeCheck supports selected US and Canadian AAMVA barcode formats, versions 08–
 
 ### If your scanner sends one long line
 
+Version **1.1.1** also handles supported headers where the scanner preserves only some line breaks, tabs or record separators, including accented header tokens after line breaks. Recovered names include a reminder to compare with the printed card. Open **App updates** to install the new release; Setup installations on the current package identity can update in place.
+
 Version **1.0.3** recovers unique date and country fields from supported flattened scanner output, including the specific `@ÂNSI` header variation, missing separators, or a missing header/first field character. Instead of stopping at that header error, it shows **Check the printed dates**. Compare both dates with the physical ID, then choose **Both dates match the card**. The app calculates the age and expiration result from those confirmed dates.
 
 This is a **date-only check**. Missing separators mean the app cannot prove the whole barcode arrived. It never gives an automatic pass from recovered text. Missing, invalid, or conflicting dates still need manual review. For full barcode validation, use the recommended [scanner settings](docs/SCANNER_SETUP.md).
@@ -128,7 +130,7 @@ dotnet run --project src/AgeCheck
 
 [Scanner research and references](docs/SCANNER_RESEARCH.md)
 
-Pushing code does not update installed apps. Publishing a new versioned release makes an update available.
+Publishing a new versioned release makes an update available. Increasing `Version` in `Directory.Build.props` and pushing that change to `main` now builds and publishes the release automatically; ordinary code pushes without that version change do not publish updates.
 
 ---
 
