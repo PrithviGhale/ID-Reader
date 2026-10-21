@@ -1,5 +1,12 @@
 # Validation record
 
+## VS Code markup-generation repair (October 21, 2026)
+
+- The active editor logs reported `Cannot find the type 'Outcome'` during WPF's editor markup pass. A probe that withholds the referenced project assembly reproduced `MC3050` and generated no `MainWindow` source, explaining the cascading missing-control errors.
+- Replaced external `x:Static` enum references in history DataTriggers with literal values. The same probe now generates all **63 named controls**, without warnings. Normal builds retain their usual generated-source handling; no hand-written control declarations, diagnostic exclusions or suppression are used.
+- `scripts/check-editor.ps1` checks every named control in a fresh intermediate directory. Packaging runs this regression check. The WPF self-test additionally checks that adult/underage/expired history rows still receive their expected colors at runtime.
+- Debug build: zero warnings/errors. All 137 core tests passed. This is a source/editor repair; it does not require users of the installed app to reinstall version 1.1.1.
+
 ## Version 1.1.1 keyboard transport regression (October 21, 2026)
 
 - Reproduced the two supplied private scanner strings outside the repository. Both recover the expected birth/expiration dates and names, require printed-date confirmation, and then calculate 21+. The original exact strings already recovered in 1.1.0; its reported header error could not be reproduced from the pasted strings alone.

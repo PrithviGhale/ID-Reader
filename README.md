@@ -118,6 +118,12 @@ Open **☰ → App updates** to check for a new version. Read the release notes,
 
 ## For developers
 
+### VS Code reports missing screen controls
+
+If many `CS0103` errors name controls such as `RootLayout`, `NameLabel` or `Headline` even though the app builds, the editor's WPF markup pass may have failed to generate the window's partial class. The history styling now uses literal trigger values so markup generation does not need to load the referenced `Outcome` enum during editor initialization.
+
+After updating the source, reload the VS Code window if old diagnostics remain. Run `./scripts/check-editor.ps1` to verify that all 63 window controls generate even before the referenced project assembly is available. This check also runs during packaging. It does not hide or suppress C# diagnostics.
+
 Built with C#, .NET 10 LTS, WPF, and Velopack.
 
 ```powershell

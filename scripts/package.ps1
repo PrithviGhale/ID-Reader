@@ -7,6 +7,7 @@ dotnet tool restore
 Check-Exit
 dotnet test AgeCheck.slnx -c Release -p:UseSharedCompilation=false -nodeReuse:false -m:1
 Check-Exit
+& (Join-Path $PSScriptRoot 'check-editor.ps1')
 dotnet publish src/AgeCheck/AgeCheck.csproj -c Release -r $config.runtime --self-contained true -p:Version=$Version -p:UseSharedCompilation=false -nodeReuse:false -o artifacts/publish
 Check-Exit
 $packArgs = @('pack', '--packId', $config.packId, '--packTitle', 'AgeCheck', '--packAuthors', 'AgeCheck', '--packVersion', $Version, '--packDir', 'artifacts/publish', '--mainExe', 'AgeCheck.exe', '--channel', $config.channel, '--runtime', $config.runtime, '--outputDir', 'artifacts/releases', '--releaseNotes', 'RELEASE_NOTES.md')

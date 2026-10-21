@@ -1,0 +1,9 @@
+<Project>
+  <!-- Imported only by check-editor.ps1, never by a normal application build.
+       Model the editor loading XAML before a project reference is available. -->
+  <Target Name="ProbeMissingProjectAssembly" BeforeTargets="MarkupCompilePass1">
+    <ItemGroup>
+      <ReferencePath Remove="@(ReferencePath)" Condition="'%(ReferencePath.Filename)' == 'AgeCheck.Core'" />
+    </ItemGroup>
+  </Target>
+</Project>

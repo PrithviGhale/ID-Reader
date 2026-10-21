@@ -154,6 +154,30 @@ public partial class MainWindow
             Page(ScanPage); Activate();
         }
         finally { writeClipboard=previousClipboard; suppressAnimations=previousSuppression; }
+        await VerifyHistoryColors(checks);
+    }
+    private async Task VerifyHistoryColors(List<string> checks)
+    {
+        // Literal trigger values must still convert to the enum at runtime, without
+        // requiring the markup compiler to load our referenced assembly in the IDE.
+        System.Windows.Controls.TextBlock? FindText(DependencyObject parent, string text)
+        {
+            if (parent is System.Windows.Controls.TextBlock block && block.Text == text) return block;
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+                if (FindText(VisualTreeHelper.GetChild(parent, i), text) is { } found) return found;
+            return null;
+        }
+        foreach (var (years, expired, resource) in new[] { (25, false, "AccentText"), (19, false, "Danger"), (30, true, "Danger") })
+        {
+            history.Clear(); Page(ScanPage); DemoResult(years, expired); Page(HistoryPage);
+            UpdateLayout(); await Task.Delay(100);
+            var row = (DependencyObject?)HistoryList.ItemContainerGenerator.ContainerFromIndex(0);
+            var label = row == null ? null : FindText(row, history.Entries[0].StatusLabel);
+            if (label?.Foreground is not SolidColorBrush actual || actual.Color != ((SolidColorBrush)RootLayout.Resources[resource]).Color)
+                throw new InvalidOperationException("History status trigger did not apply the expected color");
+            checks.Add("History status trigger preserves its runtime color: " + resource);
+        }
+        history.Clear(); UpdateHistoryUI(); Page(ScanPage); Activate();
     }
     private async Task MotionTest()
     {
