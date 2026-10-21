@@ -14,6 +14,8 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <!-- Required for the compiler-generated Windows interop stub in Theme. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <StartupObject>AgeCheck.App</StartupObject>
     <ApplicationIcon>Assets/AgeCheck.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>

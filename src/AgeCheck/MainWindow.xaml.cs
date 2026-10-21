@@ -21,11 +21,11 @@ public partial class MainWindow : Window
     private DateTimeOffset currentScanTime;
     private bool drawerOpen;
     private readonly SolidColorBrush edgeBrush = new(Colors.Transparent);
-    private Action<string> writeClipboard = value => Clipboard.SetText(value);
+    private Action<string> writeClipboard = Clipboard.SetText;
     private readonly DispatcherTimer quiet = new() { Interval = TimeSpan.FromMilliseconds(700) };
     private readonly DispatcherTimer deadline = new() { Interval = TimeSpan.FromSeconds(20) };
     private readonly DispatcherTimer privacy = new() { Interval = TimeSpan.FromSeconds(30) };
-    private UpdateManager? updater;
+    private readonly UpdateManager? updater;
     private UpdateInfo? update;
     private bool updateBusy, downloaded, processing, inputBlocked, showingResult;
     private int scanGeneration;
@@ -292,18 +292,18 @@ public partial class MainWindow : Window
         darkTheme = dark; Theme.Apply(dark, RootLayout);
         Theme.TitleBar(this, dark);
         PaintNavigation(); PaintStatus(visibleResult?.Outcome);
-        LightThemeButton.SetResourceReference(System.Windows.Controls.Control.BackgroundProperty, dark ? "Quiet" : "Accent");
-        LightThemeButton.SetResourceReference(System.Windows.Controls.Control.ForegroundProperty, dark ? "Ink" : "AccentInk");
-        DarkThemeButton.SetResourceReference(System.Windows.Controls.Control.BackgroundProperty, dark ? "Accent" : "Quiet");
-        DarkThemeButton.SetResourceReference(System.Windows.Controls.Control.ForegroundProperty, dark ? "AccentInk" : "Ink");
+        LightThemeButton.SetResourceReference(BackgroundProperty, dark ? "Quiet" : "Accent");
+        LightThemeButton.SetResourceReference(ForegroundProperty, dark ? "Ink" : "AccentInk");
+        DarkThemeButton.SetResourceReference(BackgroundProperty, dark ? "Accent" : "Quiet");
+        DarkThemeButton.SetResourceReference(ForegroundProperty, dark ? "AccentInk" : "Ink");
         if (save) SavePreferences();
     }
     private void PaintNavigation()
     {
         foreach (var (button,page) in new[] { (ScanNav, ScanPage), (HistoryNav, HistoryPage), (SetupNav, SetupPage), (UpdatesNav, UpdatesPage), (SettingsNav, SettingsPage) })
         {
-            button.SetResourceReference(System.Windows.Controls.Control.BackgroundProperty, page == activePage ? "AccentSoft" : "Surface");
-            button.SetResourceReference(System.Windows.Controls.Control.ForegroundProperty, page == activePage ? "AccentText" : "Muted");
+            button.SetResourceReference(BackgroundProperty, page == activePage ? "AccentSoft" : "Surface");
+            button.SetResourceReference(ForegroundProperty, page == activePage ? "AccentText" : "Muted");
         }
         LocalBadge.Text = "/  " + (activePage == HistoryPage ? "HISTORY" : activePage == SetupPage ? "SETUP" : activePage == UpdatesPage ? "UPDATES" : activePage == SettingsPage ? "SETTINGS" : "SCAN");
     }

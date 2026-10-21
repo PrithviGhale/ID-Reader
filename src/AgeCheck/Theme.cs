@@ -3,10 +3,11 @@ using System.Windows.Media;
 using System.Runtime.InteropServices;
 
 namespace AgeCheck;
-internal static class Theme
+internal static partial class Theme
 {
-    [DllImport("dwmapi.dll")]
-    private static extern int DwmSetWindowAttribute(IntPtr window, int attribute, ref int value, int size);
+    [LibraryImport("dwmapi.dll")]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    private static partial int DwmSetWindowAttribute(IntPtr window, int attribute, ref int value, int size);
 
     public static void TitleBar(Window window, bool dark)
     {
@@ -42,7 +43,7 @@ internal static class Theme
             var brush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(value));
             brush.Freeze(); Application.Current.Resources[key] = brush;
             // Local resources also invalidate detached test presentation sources immediately.
-            if (surface != null) surface.Resources[key] = brush;
+            surface?.Resources[key] = brush;
         }
     }
 }
