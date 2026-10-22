@@ -45,6 +45,24 @@ public class CompleteKeyboardTests
         Assert.True(result.KeyboardTransport);
         Assert.Equal(Outcome.Review, Barcode.Check(flat[..^1], Today, true).Outcome);
     }
+    [Fact]
+    public void TwoSubfilesWithNameEndingDAndExtraFieldsRecoverBothTransports()
+    {
+        string[] fields = ["DCAD", "DCBNONE", "DCDNONE", "DBA09282030", "DCSEXAMPLE", "DACARNOLD", "DADTEST", "DBD08292026", "DBB09282004", "DBC1", "DAYBRO", "DAU076 in", "DAG42 TEST ST", "DAHNONE", "DAISAMPLETON", "DAJMA", "DAK021431550  ", "DAQSYNTHETIC42", "DCF08312026 REV 02222016", "DCGUSA", "DDEN", "DDFN", "DDGN", "DCKSYNTHETIC01", "DCUJR", "DDAF", "DDB02222016", "DDK1"];
+        string[] zone = ["ZMA604", "ZMB08312026", "ZMC", "ZMD", "ZME"];
+        string first = "DL" + string.Join('\n', fields) + "\r", second = "ZM" + string.Join('\n', zone) + "\r";
+        string strict = $"@\n\u001e\rANSI 636002080002DL0041{first.Length:D4}ZM{41 + first.Length:D4}{second.Length:D4}{first}{second}";
+        string flat = strict.Replace("@\n\u001e\rANSI ", "@\u00c2NSI ").Replace("\n", "").Replace("\r", "");
+        string labeled = strict.Replace("@\n\u001e\rANSI ", "@[LF][CR]ANSI ").Replace("\n", "[LF]").Replace("\r", "[CR]") + "[CR]";
+        foreach (var scan in new[] { flat, labeled })
+        {
+            var result = Barcode.Check(scan, Today, true);
+            Assert.True(result.Outcome == Outcome.Passed, result.Detail + " / " + (scan == flat ? "flat" : "labeled"));
+            Assert.Equal("ARNOLD EXAMPLE", result.DisplayName);
+            Assert.True(result.KeyboardTransport);
+        }
+        Assert.Equal(Outcome.Review, Barcode.Check(flat[..^1], Today, true).Outcome);
+    }
 
     [Theory]
     [InlineData(25, false, Outcome.Passed)]

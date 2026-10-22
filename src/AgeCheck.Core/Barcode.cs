@@ -101,12 +101,21 @@ public static partial class Barcode
         CheckResult Bad(string detail) => new(Outcome.Review, detail);
         // Normalize only the fixed header token, never identity/date values. Keyboard
         // transport may preserve some separators and drop others, or compose a dead key.
-        // A repaired header always stays in assisted recovery, never strict validation.
+        // Repaired control characters are accepted only if the entire reconstructed
+        // directory and every field pass the strict parser below.
         var header = RecoveryHeader().Match(text);
         if (header.Success) text = "@ANSI " + text[header.Length..];
         if (text.Any(c => c > 127)) return Bad("Unsupported character encoding. Match the scanner keyboard layout to Windows and rescan.");
+        if (header.Success && text.Contains('\n') && text.Contains('\r'))
+        {
+            var framed = Check("@\n\u001e\rANSI " + text[6..], today);
+            if (framed.Outcome != Outcome.Review)
+                return framed with { KeyboardTransport = true,
+                    Detail = "Age and expiration calculated from the complete scanned fields. Compare the photograph and printed card with the customer. ID authenticity is not verified." };
+        }
         // A keyboard scanner can strip separators, the header, and even the first D.
-        // Recovery is an operator-assisted date check, NEVER full-frame validation.
+        // Only a complete reconstructed directory reaches automatic evaluation;
+        // partial/headerless recovery remains operator-assisted.
         bool nameStart = text.StartsWith("DCS", StringComparison.Ordinal) || text.StartsWith("CS", StringComparison.Ordinal)
             || text.StartsWith("DLDCS", StringComparison.Ordinal) || text.StartsWith("IDDCS", StringComparison.Ordinal);
         bool flatHeader = Regex.IsMatch(text, @"^@?ANSI [0-9]{6}(08|09|10)[0-9]{4}", RegexOptions.CultureInvariant);
@@ -207,6 +216,24 @@ public static partial class Barcode
         {
             var matches = Regex.Matches(raw[2..], jurisdiction ? @"Z[A-Z]{2}" : @"D[A-QS-Z]{2}", RegexOptions.CultureInvariant)
                 .Select(m => (Index:m.Index, Code:m.Value)).ToList();
+            if (!jurisdiction)
+            {
+                for (int i = 1; i + 1 < matches.Count; i++)
+                {
+                    var field = matches[i];
+                    // A first name ending in D followed by DAD can look like
+                    // DDA plus another false field at the end of DAD.
+                    if (matches[i - 1].Code == "DAC" && field.Code == "DDA"
+                        && matches[i + 1].Index == field.Index + 3
+                        && raw.Length >= field.Index + 6
+                        && raw.Substring(field.Index + 3, 3) == "DAD"
+                        && matches.Skip(i + 2).Any(m => m.Code == "DDA"))
+                    {
+                        matches[i] = (field.Index + 1, "DAD");
+                        matches.RemoveAt(i + 1);
+                    }
+                }
+            }
             if (matches.Count == 0 || matches[0].Index != 0 || raw.Length + matches.Count != encodedLength) return null;
             var lines = new List<string>();
             for (int i = 0; i < matches.Count; i++)
