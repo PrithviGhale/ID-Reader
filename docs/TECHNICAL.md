@@ -2,15 +2,23 @@
 
 ## Privacy and performance
 
-- ID processing is local and works offline. Raw barcodes, addresses, license numbers and images are not saved. A bounded session history holds only first/last names, scan times, demo/confirmation flags and result categories in memory; it is never written to disk.
+- ID processing is local and works offline. Raw barcodes, addresses, license numbers and images are not saved. A bounded session history holds only first/last names, integer ages, scan times, recognition labels, demo/confirmation flags and result categories in memory; it is never written to disk.
 - Current input and results clear after 30 seconds, on the next scan, when changing pages, and when the app loses focus. Session history intentionally remains until explicitly cleared, disabled or the app closes.
-- Only non-sensitive preferences (startup update checks, light/dark appearance, motion and the history-enabled switch) are stored in `%LOCALAPPDATA%\AgeCheck\settings.json`.
+- Non-sensitive preferences (startup update checks, appearance, motion, session history and customer recognition) are stored in `%LOCALAPPDATA%\AgeCheck\settings.json`.
+- Customer recognition defaults on and is separately controllable. `%LOCALAPPDATA%\AgeCheck\customers.dat` is encrypted using Windows DPAPI CurrentUser. It contains a random 32-byte HMAC key and up to 5,000 names, keyed fingerprints, first/last scan timestamps and counts. Raw identifiers, dates of birth, full barcodes, addresses and photos are not saved. Records persist until explicitly deleted or pruned at capacity. The HMAC input is transient issuer/country/card-number/birth-date data from a complete checked frame; it is excluded from JSON serialization. No matching by name alone.
+- Customer writes use a file lock, reload under the lock, and atomic replacement. Deleting the file resets stale instances on their next write. Read, protection and write errors are contained so offline age checks continue; an unreadable store is not silently overwritten. A corrupt store can be reset by deleting saved customers in Settings. Temporary developer modes use an in-memory book, and storage tests use synthetic data in artifacts.
 - Copy name is an explicit clipboard action. Copied names can persist outside the app and follow Windows clipboard settings; they are not cleared on focus loss so they can be pasted into a rewards form.
 - No analytics or application crash reporting. Update requests contain no scanned ID data. GitHub receives ordinary network metadata when checking/downloading updates.
 - No browser engine, global keyboard hook, background service or continuous animation. Input and one-shot timers drive the interface; all scan timers stop when idle.
 - Page/result transitions last 340 ms; the opening reveal lasts 520 ms. They respect the motion switch and Windows preference, use opacity/translation/scale, and stop at their base values. The drawer and edge-color transitions are finite too.
 
 Clearing removes application references and visible data; .NET garbage collection and Windows memory management do not provide a guarantee of immediate secure memory erasure. Avoid collecting process dumps while real IDs are in use.
+
+## Age and recognition in 1.2.0
+
+The existing parser/capture behavior is retained. After a successful date outcome, AgeDetails computes whole years, next birthday and days until the 21st birthday using DateOnly and the same leap-day convention as Barcode.Evaluate. Pending or invalid dates do not create a final age display or saved customer. DAQ is read only from a parsed frame; named complete keyboard frames use the established reconstruction path. Demos and headerless recovery cannot create customer records. Persistent recognition never replaces a new date check.
+
+Updates are a section inside Settings. Availability drives both the gear badge and update-card alert; the existing Velopack download, verification and restart path is unchanged. The home control returns to Scan. Historical sections below document earlier versions; current complete keyboard behavior is described in the 1.1.2 validation record.
 
 ## Supported barcode subset
 
@@ -54,11 +62,11 @@ AgeCheck validates AAMVA `ANSI ` headers, version **08, 09 or 10**, subfile offs
 
 Dates are explicitly `MMddyyyy` for `USA` and `yyyyMMdd` for `CAN`; the app never guesses a country. Dates use the PC's local calendar date, so keep the system clock correct. The expiration date is treated as valid through that day. A February 29 birthday reaches 21 on March 1 in a non-leap year; February 28 in that boundary year always requires manual review because jurisdiction-specific policy can differ. Expiration takes priority in the displayed outcome.
 
-The capture limit is 16,384 characters and 20 seconds. After 700 ms without input, the app validates the **whole frame**; an embedded newline does not submit a scan. A scan beep is not proof that every character arrived. Unsupported versions (including newer formats), modified scanner output and non-AAMVA documents require manual review.
+The capture limit is 16,384 characters and 20 seconds. After 700 ms without input, the app validates the **whole frame**; incomplete or review input gets up to 2 seconds of silence for more data. The buffer is retained during parsing and stale revisions are discarded; an embedded newline does not submit a scan. A scan beep is not proof that every character arrived. Unsupported versions (including newer formats), modified scanner output and non-AAMVA documents require manual review.
 
 ## Updates
 
-Open **App updates** to check for stable releases, read release notes, download an update, then choose **Update and restart**. You can return to scanning and postpone restart. Startup checks can be disabled. Failed checks/downloads leave offline checking available.
+Open **Settings → App updates** to check for stable releases, read release notes, download an update, then choose **Update and restart**. You can return to scanning and postpone restart. Startup checks can be disabled. Failed checks/downloads leave offline checking available.
 
 Updates use Velopack's `GithubSource` and package verification, over HTTPS, from this public repository. No tokens are embedded. Development and portable copies explain that the Setup installer is required for in-app updates.
 

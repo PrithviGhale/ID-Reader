@@ -39,6 +39,10 @@ public partial class MainWindow : Window
     private UIElement? activePage;
     private static bool suppressAnimations;
     private readonly string settingsPath;
+    private readonly CustomerStore customers;
+    private bool rememberCustomers = true;
+    private Guid rememberedScan;
+    private CustomerVisit? currentVisit;
     private static DateOnly Today => DateOnly.FromDateTime(DateTime.Now);
     private bool CanCapture => IsActive && ScanPage.Visibility == Visibility.Visible && !inputBlocked && !drawerOpen;
 
@@ -47,6 +51,7 @@ public partial class MainWindow : Window
         bool developerMode = args.Any(a => a is "--self-test" or "--layout-test" or "--screenshot" or "--motion-test");
         settingsPath = developerMode ? Path.Combine(Environment.CurrentDirectory, "artifacts", "test-preferences.json")
             : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AgeCheck", "settings.json");
+        customers = new CustomerStore(Path.Combine(Path.GetDirectoryName(settingsPath)!, "customers.dat"), memoryOnly: developerMode);
         Theme.Apply(true);
         InitializeComponent();
         var workArea = SystemParameters.WorkArea;
@@ -74,13 +79,16 @@ public partial class MainWindow : Window
                 darkTheme = prefs?.Theme != "Light";
                 motionEnabled = prefs?.Animations ?? true;
                 history.SetEnabled(prefs?.SessionHistory ?? true);
+                rememberCustomers = prefs?.RememberCustomers ?? true;
             }
         }
         catch { /* A damaged settings file must not prevent offline use. */ }
         MotionEnabled.IsChecked = motionEnabled;
         HistoryEnabled.IsChecked = history.Enabled;
+        RecognitionEnabled.IsChecked = rememberCustomers;
         HistoryList.ItemsSource = history.Entries;
         UpdateHistoryUI();
+        RefreshCustomers();
         WindowFrame.BorderBrush = edgeBrush;
         activePage = ScanPage; ApplyAppearance(darkTheme, false);
         SourceInitialized += (_, _) => Theme.TitleBar(this, darkTheme);
@@ -164,6 +172,7 @@ public partial class MainWindow : Window
     {
         scanGeneration++; scan.Clear(); quiet.Stop(); deadline.Stop(); privacy.Stop(); inputBlocked = false; showingResult = false;
         recoveredDates = null; recoveryDemo = false; RecoveryNotice.Visibility = Visibility.Collapsed;
+        ResetCustomerDetails();
         visibleResult = null;
         currentScanId = Guid.Empty;
         Phase.Text = "READY TO SCAN"; Headline.Text = "Ready to scan"; Symbol.Text = "⌁";
@@ -205,7 +214,8 @@ public partial class MainWindow : Window
         CopyNameButton.IsEnabled = result.DisplayName != null;
         NameCopyStatus.Text = result.NameNote ?? "Compare the printed name before copying.";
         ChecksLabel.Text = result.Outcome == Outcome.Review ? "Review needed · This is not a fake-ID verdict" : "Date and field checks complete · Authenticity unverified";
-        history.Record(currentScanId, result, demo, false, currentScanTime); UpdateHistoryUI();
+        ShowCustomerDetails(result, demo);
+        history.Record(currentScanId, result, demo, false, currentScanTime, Today, CurrentVisitLabel); UpdateHistoryUI();
         BirthLabel.Text = result.Birth?.ToString("MMM dd, yyyy", System.Globalization.CultureInfo.InvariantCulture) ?? "—";
         ExpiryLabel.Text = result.Expiration?.ToString("MMM dd, yyyy", System.Globalization.CultureInfo.InvariantCulture) ?? "—";
         Animate(ResultCard); privacy.Stop(); privacy.Start();
@@ -237,10 +247,12 @@ public partial class MainWindow : Window
     }
     private void Page(UIElement page)
     {
+        if (page == UpdatesPage) page = SettingsPage;
         CloseDrawer();
-        Clear(); ScanPage.Visibility = SetupPage.Visibility = UpdatesPage.Visibility = SettingsPage.Visibility = HistoryPage.Visibility = Visibility.Collapsed;
+        Clear(); ScanPage.Visibility = SetupPage.Visibility = SettingsPage.Visibility = HistoryPage.Visibility = Visibility.Collapsed;
         activePage = page;
         page.Visibility = Visibility.Visible; Animate(page);
+        if (page == HistoryPage) RefreshCustomers();
         PaintNavigation();
         PageScroll.ScrollToTop();
     }
@@ -270,13 +282,14 @@ public partial class MainWindow : Window
         result = result with { FirstName = original.FirstName, LastName = original.LastName, NameNote = original.NameNote,
             Detail = "You confirmed both dates match the printed card. This is a date-only check; the full barcode was not verified. Compare the photograph and customer." };
         ShowResult(result, demo);
-        history.Record(currentScanId,result,demo,true,currentScanTime); UpdateHistoryUI();
+        history.Record(currentScanId,result,demo,true,currentScanTime,Today,CurrentVisitLabel); UpdateHistoryUI();
         Phase.Text = "DATES CONFIRMED";
         if (result.Outcome == Outcome.Passed) ResultSubtitle.Text = "Confirmed dates meet the 21+ age threshold";
     }
     private void AdaptLayout(double width)
     {
         bool compact = width < 800;
+        BrandWordmark.Visibility = width < 600 ? Visibility.Collapsed : Visibility.Visible;
         PageHost.Margin = new Thickness(width < 600 ? 16 : 32, 22, width < 600 ? 16 : 32, 22);
         ResultCard.Padding = new Thickness(width < 600 ? 18 : 26);
         ResultDatesColumn.Width = compact ? new GridLength(0) : new GridLength(280);
@@ -296,8 +309,8 @@ public partial class MainWindow : Window
         try
         {
             Directory.CreateDirectory(Path.GetDirectoryName(settingsPath)!);
-            File.WriteAllText(settingsPath, JsonSerializer.Serialize(new Preferences(StartupChecks.IsChecked == true, darkTheme ? "Dark" : "Light", motionEnabled, history.Enabled)));
-            SettingsStatus.Text = "Preferences saved. History stays in memory and clears when you close the app.";
+            File.WriteAllText(settingsPath, JsonSerializer.Serialize(new Preferences(StartupChecks.IsChecked == true, darkTheme ? "Dark" : "Light", motionEnabled, history.Enabled, rememberCustomers)));
+            SettingsStatus.Text = "Preferences saved on this PC. Customer recognition and session history have separate controls.";
         }
         catch { SettingsStatus.Text = "Could not save preferences. They still apply for this session."; UpdateStatus.Text = "Could not save preferences. They still apply for this session."; }
     }
@@ -314,18 +327,20 @@ public partial class MainWindow : Window
     }
     private void PaintNavigation()
     {
-        foreach (var (button,page) in new[] { (ScanNav, ScanPage), (HistoryNav, HistoryPage), (SetupNav, SetupPage), (UpdatesNav, UpdatesPage), (SettingsNav, SettingsPage) })
+        foreach (var (button,page) in new[] { (ScanNav, ScanPage), (HistoryNav, HistoryPage), (SetupNav, SetupPage), (SettingsDrawerNav, SettingsPage), (SettingsNav, SettingsPage) })
         {
             button.SetResourceReference(BackgroundProperty, page == activePage ? "AccentSoft" : "Surface");
             button.SetResourceReference(ForegroundProperty, page == activePage ? "AccentText" : "Muted");
         }
         LocalBadge.Text = "/  " + (activePage == HistoryPage ? "HISTORY" : activePage == SetupPage ? "SETUP" : activePage == UpdatesPage ? "UPDATES" : activePage == SettingsPage ? "SETTINGS" : "SCAN");
+        HomeButton.Visibility = activePage == ScanPage ? Visibility.Collapsed : Visibility.Visible;
     }
     private void PaintStatus(Outcome? outcome)
     {
         string ink = outcome is Outcome.Under21 or Outcome.Expired ? "Danger" : outcome == Outcome.Review ? "WarmInk" : "AccentText";
         string surface = outcome is Outcome.Under21 or Outcome.Expired ? "DangerSoft" : outcome == Outcome.Review ? "Warm" : "AccentSoft";
         Symbol.SetResourceReference(System.Windows.Controls.TextBlock.ForegroundProperty, ink);
+        AgeLabel.SetResourceReference(System.Windows.Controls.TextBlock.ForegroundProperty, ink);
         SymbolBox.SetResourceReference(System.Windows.Controls.Border.BackgroundProperty, surface);
         PaintEdge(outcome);
     }
@@ -342,6 +357,7 @@ public partial class MainWindow : Window
         CheckButton.IsEnabled = !updateBusy && updater != null;
         DownloadButton.IsEnabled = !updateBusy && update != null && !downloaded;
         RestartButton.IsEnabled = !updateBusy && downloaded;
+        DownloadProgress.Visibility = updateBusy && update != null && !downloaded ? Visibility.Visible : Visibility.Collapsed;
     }
     private async Task CheckUpdates()
     {
@@ -352,6 +368,7 @@ public partial class MainWindow : Window
         {
             var found = await updater.CheckForUpdatesAsync();
             update = found; downloaded = false;
+            SetUpdateAlert(found != null);
             UpdateStatus.Text = found == null ? "You have the latest available stable version." : $"Version {found.TargetFullRelease.Version} is available.";
             ReleaseNotes.Text = found?.TargetFullRelease.NotesMarkdown ?? "No release notes supplied.";
         }
@@ -403,7 +420,7 @@ public partial class MainWindow : Window
         }
         Close();
     }
-    private sealed record Preferences(bool StartupChecks = true, string Theme = "Dark", bool Animations = true, bool SessionHistory = true);
+    private sealed record Preferences(bool StartupChecks = true, string Theme = "Dark", bool Animations = true, bool SessionHistory = true, bool RememberCustomers = true);
 
     private async Task LayoutTest()
     {
@@ -432,9 +449,10 @@ public partial class MainWindow : Window
                 source.CompositionTarget.RenderMode = RenderMode.SoftwareOnly;
                 RootLayout.Width = width; RootLayout.Height = height;
                 source.RootVisual = RootLayout;
-                foreach (var state in new[] { "ready", "passed", "under21", "expired", "review", "recovery", "history", "setup", "updates", "settings", "menu" })
+                foreach (var state in new[] { "ready", "passed", "under21", "expired", "review", "recovery", "history", "returning", "customers", "setup", "updates", "settings", "updatealert", "menu" })
                 {
                     Page(ScanPage); AdaptLayout(width);
+                    SetUpdateAlert(false);
                     switch (state)
                     {
                         case "passed": DemoResult(25); break;
@@ -446,6 +464,14 @@ public partial class MainWindow : Window
                         case "updates": Page(UpdatesPage); break;
                         case "settings": Page(SettingsPage); break;
                         case "history": DemoResult(25); DemoResult(19); Page(HistoryPage); break;
+                        case "returning":
+                            DemoResult(25); WelcomePanel.Visibility = Visibility.Visible;
+                            WelcomeTitle.Text = "Welcome back, ALEX SAMPLE.";
+                            WelcomeDetail.Text = "Previously scanned yesterday. Scan 3 on this PC. Today's card was checked again."; break;
+                        case "customers":
+                            Page(HistoryPage); CustomerCountLabel.Text = "DEMO / 1 protected customer";
+                            CustomersList.ItemsSource = new[] { new CustomerRecord(new string('A',64),"ALEX SAMPLE",DateTimeOffset.Now.AddDays(-7),DateTimeOffset.Now,3) }; break;
+                        case "updatealert": Page(SettingsPage); SetUpdateAlert(true); break;
                         case "menu": Menu_Click(this,new RoutedEventArgs()); break;
                     }
                     RootLayout.Measure(new Size(width,height)); RootLayout.Arrange(new Rect(0,0,width,height)); RootLayout.UpdateLayout();
@@ -494,6 +520,7 @@ public partial class MainWindow : Window
             Activate(); Page(ScanPage);
             await VerifyPreferencesAndKeyboard(checks);
             await VerifyWorkspaceFeatures(checks);
+            await VerifyCustomerFeatures(checks);
             var payload = Demo.Create(Today.AddYears(-25), Today.AddYears(2), Today.AddYears(-1));
             Receive(payload[..40]);
             Check(Phase.Text == "RECEIVING", "Receiving state");

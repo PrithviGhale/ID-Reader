@@ -21,13 +21,15 @@ A simple Windows app for checking the birth date and expiration date in an ID ba
 | Feature | How it helps |
 | --- | --- |
 | **21+ age check** | Checks whether the barcode birth date says the person is at least 21. |
+| **Current age and birthdays** | Shows age, a birthday-today message or days until the next birthday, and days until 21 for younger customers. |
+| **Returning customers** | Recognizes a previously scanned card using a keyed fingerprint and shows a welcome-back message. |
 | **Expiration check** | Shows when the ID's barcode expiration date has passed. |
 | **Clear results** | Large text shows 21+, Under 21, Expired, or Manual review. |
 | **Date comparison** | Shows the birth date and expiration date so you can compare them with the card. |
 | **Scanner text recovery** | Complete supported keyboard frames show an age result directly; incomplete recoveries ask you to confirm the printed dates. |
 | **Uppercase names** | Shows a readable first and last name in ALL CAPS, with a copy button for your rewards form. |
-| **Session history** | Keeps up to 100 names, times and results in memory until you close the app. Clear it anytime or turn it off. |
-| **Local processing** | Does not write scan history, raw barcodes or ID details to disk. Copying a name puts it on your Windows clipboard. |
+| **Session history** | Keeps up to 100 names, ages, times and results in memory. Clear it anytime or turn it off. |
+| **Local processing** | Scans stay on this PC. No full barcode, card number, photo, address or date of birth is saved. Optional customer records are encrypted for your Windows account. |
 | **Automatic clearing** | Clears results after 30 seconds, on the next scan, or when you leave the window. |
 | **Works offline** | No internet is needed to check a scan. |
 | **Built-in updates** | Check for updates, read what's new, download, and restart when you choose. |
@@ -92,13 +94,27 @@ Open the **gear at the top right** and choose **Light** or **Dark**. You can als
 
 Extra barcode checks flag conflicting revision/issue dates, unknown field codes and invalid name flags. An orange edge means **manual review**, not proof of a fake. A non-REAL-ID compliance flag is not treated as a fake-ID indicator.
 
+## Age, birthdays and returning customers (1.2.0)
+
+The scan result now shows **current age**, **birthday today** or the number of days until the next birthday, and an exact calendar-day countdown until 21 for younger customers. These details use the dates from the current checked scan; review results do not show an unverified age as settled. Leap-day birthdays follow the parser's March 1 convention in non-leap years.
+
+**Remember customers on this PC** is on by default and can be disabled in Settings. Complete named cards with a usable card identifier create a local record. Scanning that card again shows **Welcome back, NAME**, its prior scan time and scan count. The current card is always checked again; recognition never grants an age pass. Matching uses an HMAC fingerprint of issuer, country, card number and birth date, rather than matching names. Same-name customers remain distinct; a changed card number starts a new record.
+
+The encrypted customer file contains only name, keyed fingerprint, first/last scan times and count, plus its protected random matching key. It does **not** save a full barcode, raw card number, birth date, address or ID image. Windows DPAPI protects the file for the current Windows account. Up to 5,000 records are retained, with the oldest scan removed at capacity. Records remain until deleted or pruned; they are not automatically cleared when the app closes. No customer details go to the update server.
+
+Open **History and customers** for session entries and remembered customers. In **Settings → Customer recognition**, turn matching/storage off or choose **Delete saved customers...** and confirm. Turning recognition off preserves existing records; deletion removes them. Session history has its own switch and clear button. An unreadable store leaves scanning available and can be reset through the same delete control. Demos are never saved as customers.
+
+Updates now live in **Settings**, with a red **!** on the gear and update card when an update is found. The **home icon** at the top left returns directly to scanning. The new violet/mint layout keeps the age and decision prominent and adapts to smaller windows.
+
+![Welcome-back example with synthetic customer data](docs/images/returning.png)
+
 ## Names and history
 
 Names come from supported first/last-name fields; middle names are excluded. Shortened, missing or ambiguous names are shown as unavailable rather than guessed. Compare the printed name before copying it.
 
 Open **☰ → History** to see names, scan times and results from this app session. Recovered-date confirmation updates the same entry. Demo entries are marked DEMO. History is capped at 100 entries, has a Clear history button, and can be switched off in Settings; switching it off also clears it.
 
-Current scan results still clear after 30 seconds, on the next scan and when the app loses focus. History names remain in memory until cleared or the app closes. No history files are created. A copied name can remain on the Windows clipboard after the app closes and follows your Windows clipboard settings.
+Current scan results still clear after 30 seconds, on the next scan and when the app loses focus. History names remain in memory until cleared or the app closes. Session history has no file persistence. The separate remembered-customer store described below survives restarts when enabled. A copied name can remain on the Windows clipboard after the app closes and follows your Windows clipboard settings.
 
 <details>
 <summary>See the new scan result, history and menu</summary>
@@ -115,7 +131,7 @@ The current installer is **unsigned**, so Windows may show an unknown-publisher 
 
 ## Updates, without rushing you
 
-Open **☰ → App updates** to check for a new version. Read the release notes, download it, and choose **Update and restart** when ready. You can turn off startup checks or postpone the update. Scanning still works if the internet is unavailable.
+Open **Settings (gear) → App updates** to check for a new version. Read the release notes, download it, and choose **Update and restart** when ready. You can turn off startup checks or postpone the update. Scanning still works if the internet is unavailable.
 
 ## For developers
 

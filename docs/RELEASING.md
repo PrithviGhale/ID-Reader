@@ -5,7 +5,7 @@
 Install the .NET 10 SDK on Windows x64, then run:
 
 ```powershell
-./scripts/package.ps1 -Version 1.1.1
+./scripts/package.ps1 -Version 1.2.0
 ```
 
 The script restores the pinned Velopack tool, runs tests, publishes a self-contained Windows app and packages all assets under `artifacts/releases/`. No SDK or separate runtime is required on the customer's machine. Full update packages are used; delta packages are an optional future optimization.
@@ -35,7 +35,7 @@ The default workflow produces an **unsigned** release. This is disclosed in rele
 For signed builds, provision an Azure Artifact Signing account and certificate profile, grant the build identity permission to sign, and follow the [Velopack signing guide](https://docs.velopack.io/packaging/signing). Create a metadata JSON file with `Endpoint`, `CodeSigningAccountName` and `CertificateProfileName`, then run:
 
 ```powershell
-./scripts/package.ps1 -Version 1.1.1 -SigningMetadata ./signing-metadata.json
+./scripts/package.ps1 -Version 1.2.0 -SigningMetadata ./signing-metadata.json
 ```
 
 The script passes that file to Velopack's supported `--azureTrustedSignFile` option so its setup/update binaries and application files are signed during packaging. CLI/package versions are pinned together at 1.2.161; use the requirements for that version (newer 1.3 documentation describes a different signing implementation). Configure the required Windows signing tools and Azure authentication in your build environment. In CI, authenticate using a protected identity or secrets and supply the metadata path to the packaging step. No signing credentials belong in source control or the app. Signing has not been exercised in this repository because no signing identity was provided.
@@ -47,7 +47,7 @@ Use an isolated Windows account or VM:
 1. Install the older Setup release and launch it.
 2. Publish a strictly newer package with identical identity, architecture and channel to the configured repository.
 3. Check for updates; verify the version and notes. Download, postpone, scan synthetic samples, then choose Update and restart.
-4. Confirm the new version, preserved update preference and absence of retained scan data.
+4. Confirm the new version, preserved update preference and absence of retained current results. Confirm recognition settings and protected customer records survive when enabled, and that deleting them remains effective.
 5. Repeat offline and with interrupted downloads; verify scanning remains usable. Confirm restart cannot happen during receiving/processing.
 
 Do not publish throwaway stable tags to the real repository just for testing: installed users may receive them. An isolated test fork and matching `release-config.json` are preferable. This end-to-end installed update test remains outstanding for the initial release.

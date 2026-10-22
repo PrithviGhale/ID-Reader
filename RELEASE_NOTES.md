@@ -1,3 +1,14 @@
+# AgeCheck 1.2.0 - A clearer counter and familiar faces
+
+- A redesigned violet/mint interface, a large current-age readout, clearer scan results and a home icon to return to Scan.
+- Birthday-today messages, days until the next birthday, and days until 21 for younger customers. Dates are calculated from the current checked scan.
+- Updates move into Settings. A red ! badge appears on the gear and update card when a newer release is found.
+- Returning-customer recognition survives restarts. It defaults on, stores only an encrypted name, keyed card fingerprint, visit counts and times, and can be turned off or deleted in Settings. No full barcode, raw card number, birth date, address or photo is stored. Up to 5,000 records; oldest scans are pruned at capacity. Demos are never saved.
+- History now includes age and seen-before status, with separate session and remembered-customer sections. Current details still clear on the next scan, focus loss and the privacy timer.
+- Existing scanning and direct 21+/Under 21/Expired behavior is preserved. A saved record never approves a new scan. ID authenticity remains unverified.
+
+## Previous release
+
 # AgeCheck 1.1.2 - Direct keyboard age results and steadier capture
 
 - Complete supported flattened keyboard scans now show 21+, Under 21 or Expired directly, without a confirmation click. The app checks the encoded directory length, inferred field boundaries, unique required dates, country and date consistency before using this path.

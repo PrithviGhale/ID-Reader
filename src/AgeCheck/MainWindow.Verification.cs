@@ -36,10 +36,11 @@ public partial class MainWindow
             ApplyAppearance(dark,false);
             foreach(var surface in new[]{"Surface","Canvas","Inset"})
                 foreach(var ink in new[]{"Ink","Muted"}) Check(Contrast(ink,surface)>=4.5,$"{(dark?"Dark":"Light")} {ink}/{surface} contrast >= 4.5");
+            Check(Contrast("BrandText","BrandSoft") >= 4.5, "Brand text meets 4.5 contrast in both themes");
         }
         ApplyAppearance(true,false);
         var legacy = JsonSerializer.Deserialize<Preferences>("{\"StartupChecks\":false}");
-        Check(legacy is { StartupChecks:false, Theme:"Dark", Animations:true },"Old preferences migrate with safe defaults");
+        Check(legacy is { StartupChecks:false, Theme:"Dark", Animations:true, RememberCustomers:true },"Old preferences migrate with safe defaults");
         MotionEnabled.IsChecked=false; MotionEnabled_Click(this,new RoutedEventArgs());
         Check(JsonSerializer.Deserialize<Preferences>(File.ReadAllText(settingsPath))?.Animations==false,"Animation preference saved");
         MotionEnabled.IsChecked=true; MotionEnabled_Click(this,new RoutedEventArgs());

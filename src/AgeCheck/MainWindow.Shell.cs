@@ -51,7 +51,7 @@ public partial class MainWindow
     private void UpdateHistoryUI()
     {
         HistoryCountLabel.Text=history.Enabled?$"{history.Entries.Count} scans · up to {SessionHistory.Capacity}":"Session history is off";
-        HistoryPrivacyLabel.Text=history.Enabled?"Session history is on: names and results stay in memory until you close the app.":"Session history is off. Current results still clear automatically.";
+        HistoryPrivacyLabel.Text=(history.Enabled ? "Session history is on. " : "Session history is off. ") + (rememberCustomers ? "Customer recognition is on: names and visit records are protected on this PC." : "Customer recognition is off. Current details still clear automatically.");
         HistoryEmptyLabel.Visibility=history.Entries.Count==0?Visibility.Visible:Visibility.Collapsed;
         HistoryEmptyLabel.Text=history.Enabled?"No scans yet. Scan a card or try a clearly marked demo.":"Turn on session history in Settings to keep names and results until the app closes.";
     }

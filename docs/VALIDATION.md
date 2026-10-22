@@ -1,5 +1,16 @@
 # Validation record
 
+## Version 1.2.0 age, birthdays, recognition and Settings (October 22, 2026)
+
+- **170 automated core cases pass**, including the existing scanner suite. New calendar checks cover exact age boundaries, birthday today, year rollover, leap-day anniversaries and days until 21. Recognition tests cover same-name/different-card records, bounded capacity, reopening the book and excluding transient identity data from JSON/history.
+- The parser's outcome rules and keyboard capture are preserved. A transient card identity is extracted only from parsed fields; customer storage uses an HMAC fingerprint, not name matching, and never changes the outcome of a new scan.
+- The final self-contained **1.2.0 app passes its Windows UI self-test**: direct outcomes and paused scanner input, age/birthday display, under-21 countdown and warning color, welcome-back matching, one count per scan, history age/recognition labels, focus clearing, recognition-off behavior, deletion/cancellation and exclusion of demos.
+- Actual Windows DPAPI tests save and reopen an encrypted synthetic customer file, verify names/card numbers are not plaintext on disk, merge writes from multiple store instances, prevent deleted records from returning, and recover by explicitly deleting damaged storage. Unreadable storage stays untouched and age checks remain available. Developer modes use an in-memory customer book; storage tests use temporary synthetic files under artifacts and remove them afterward.
+- Settings contains the update controls, and availability marks both the gear and update card. The home control returns to Scan. Legacy preferences migrate with customer recognition enabled. Both themes pass primary/muted contrast checks and the new brand-text check at 4.5 or higher.
+- **280 layout cases pass** across two themes, ten viewports and fourteen states, including welcome-back, saved-customer and update-alert views. Scan, small-window Settings and welcome views were visually inspected. Packaged motion checks pass opening, rapid navigation, menu transitions and reduced-motion cancellation.
+- Debug and Release builds have zero compiler warnings/errors. The editor regression probe generates all **81 named controls** without the referenced project assembly; no diagnostics are suppressed.
+- Physical scanner testing and a complete installed-version upgrade remain deployment checks. Existing physical scan success was reported by the user for 1.1.2; this release retains that capture/parser path. Customer recognition does not authenticate the card, and stored records never approve a fresh scan.
+
 ## Version 1.1.2 direct keyboard results (October 22, 2026)
 
 - Complete supported keyboard frames are reconstructed using the original single-subfile directory, exact encoded length, initial DAQ and terminal eight-digit DDB. Strict date, duplicate-field, country, revision and optional consistency checks then run. Other layouts retain assisted recovery or review; this is not authenticity verification.

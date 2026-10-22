@@ -1,11 +1,13 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
+using System.Text.Json.Serialization;
 
 namespace AgeCheck.Core;
 
 public enum Outcome { Passed, Under21, Expired, Review }
 public sealed record CheckResult(Outcome Outcome, string Detail, DateOnly? Birth = null, DateOnly? Expiration = null, bool NeedsDateConfirmation = false,
-    string? FirstName = null, string? LastName = null, string? NameNote = null, bool KeyboardTransport = false)
+    string? FirstName = null, string? LastName = null, string? NameNote = null, bool KeyboardTransport = false,
+    [property: JsonIgnore] string? CardIdentity = null)
 {
     public string? DisplayName => FirstName != null && LastName != null ? FirstName + " " + LastName : null;
 }
@@ -74,7 +76,9 @@ public static partial class Barcode
         if (birth > today || issued > today || issued < birth || expiry < issued || birth < today.AddYears(-125))
             return new(Outcome.Review, "Dates are inconsistent. Compare the printed card and review manually.", birth, expiry);
         var name = ReadName(fields);
-        CheckResult Finish(CheckResult r) => r with { FirstName = name.First, LastName = name.Last, NameNote = name.Note };
+        string? identity = fields.TryGetValue("DAQ", out var cardNumber) && Regex.IsMatch(cardNumber, @"^[A-Z0-9-]{1,80}$", RegexOptions.CultureInvariant)
+            ? text.Substring(9, 6) + "|" + country + "|" + cardNumber + "|" + birth.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) : null;
+        CheckResult Finish(CheckResult r) => r with { FirstName = name.First, LastName = name.Last, NameNote = name.Note, CardIdentity = identity };
         if (fields.ContainsKey("DDB") && (!Date("DDB", out var revised) || revised > issued))
             return Finish(new(Outcome.Review, "Card revision date is invalid or later than the issue date. Compare the printed card and review manually.", birth, expiry));
         if (fields.TryGetValue("DBC", out var sex) && sex is not ("1" or "2" or "9"))
