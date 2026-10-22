@@ -154,7 +154,6 @@ public partial class MainWindow : Window
         Phase.Text = "PROCESSING"; Headline.Text = "Checking dates…";
         string raw = scan.Snapshot();
         var result = await Task.Run(() => Barcode.Check(raw, Today, allowScannerRecovery: true));
-        raw = string.Empty;
         processing = false;
         if (generation != scanGeneration || revision != inputRevision || !IsActive) return;
         // Incomplete input gets additional time to survive USB/keyboard pauses.
@@ -166,7 +165,7 @@ public partial class MainWindow : Window
             Phase.Text = "RECEIVING"; Headline.Text = "Waiting for the rest of the scan";
             return;
         }
-        deadline.Stop(); scan.Clear(); ShowResult(result, false);
+        deadline.Stop(); scan.Clear(); ShowResult(result, false, raw);
     }
     private void Clear()
     {
@@ -185,7 +184,7 @@ public partial class MainWindow : Window
         ChecksLabel.Text = "Local checks · No cloud upload";
         PaintStatus(null);
     }
-    private void ShowResult(CheckResult result, bool demo)
+    private void ShowResult(CheckResult result, bool demo, string? rawBarcode = null)
     {
         visibleResult = result;
         if (currentScanId == Guid.Empty) StartCustomer();
@@ -215,7 +214,7 @@ public partial class MainWindow : Window
         NameCopyStatus.Text = result.NameNote ?? "Compare the printed name before copying.";
         ChecksLabel.Text = result.Outcome == Outcome.Review ? "Review needed · This is not a fake-ID verdict" : "Date and field checks complete · Authenticity unverified";
         ShowCustomerDetails(result, demo);
-        history.Record(currentScanId, result, demo, false, currentScanTime, Today, CurrentVisitLabel); UpdateHistoryUI();
+        history.Record(currentScanId, result, demo, false, currentScanTime, Today, CurrentVisitLabel, rawBarcode); UpdateHistoryUI();
         BirthLabel.Text = result.Birth?.ToString("MMM dd, yyyy", System.Globalization.CultureInfo.InvariantCulture) ?? "—";
         ExpiryLabel.Text = result.Expiration?.ToString("MMM dd, yyyy", System.Globalization.CultureInfo.InvariantCulture) ?? "—";
         Animate(ResultCard); privacy.Stop(); privacy.Start();

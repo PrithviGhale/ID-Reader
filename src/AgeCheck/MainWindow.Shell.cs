@@ -59,7 +59,7 @@ public partial class MainWindow
     private void ClearHistory_Click(object sender,RoutedEventArgs e) { history.Clear(); HistoryDetail.Visibility=Visibility.Collapsed; UpdateHistoryUI(); }
     private void HistoryEnabled_Click(object sender,RoutedEventArgs e)
     {
-        history.SetEnabled(HistoryEnabled.IsChecked==true); UpdateHistoryUI(); SavePreferences();
+        history.SetEnabled(HistoryEnabled.IsChecked==true); HistoryDetail.Visibility=Visibility.Collapsed; UpdateHistoryUI(); SavePreferences();
     }
     private void CopyName_Click(object sender,RoutedEventArgs e)
     {
@@ -68,6 +68,23 @@ public partial class MainWindow
     private void HistoryCopy_Click(object sender,RoutedEventArgs e)
     {
         if(sender is FrameworkElement{DataContext:ScanEntry entry} && entry.CanCopy) CopyName(entry.Name);
+    }
+    private void HistoryBarcodeCopy_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { DataContext: ScanEntry entry }) CopyScannerText(entry);
+    }
+    private void HistoryDetailCopyBarcode_Click(object sender, RoutedEventArgs e)
+    {
+        if (HistoryList.SelectedItem is ScanEntry entry) CopyScannerText(entry);
+    }
+    private void CopyScannerText(ScanEntry entry)
+    {
+        if (entry.RawBarcode is not { Length: > 0 } raw || !history.Entries.Contains(entry)) return;
+        string shareable = raw.Replace("\u001e", "[RS]").Replace("\u001d", "[GS]").Replace("\u0003", "[ETX]")
+            .Replace("\r", "[CR]").Replace("\n", "[LF]");
+        try { writeClipboard(shareable); BarcodeCopyStatus.Text = HistoryCopyStatus.Text = "Scanner text copied. It contains personal information; paste only where intended."; }
+        catch (Exception ex) when (ex is System.Runtime.InteropServices.ExternalException or InvalidOperationException)
+        { BarcodeCopyStatus.Text = HistoryCopyStatus.Text = "Clipboard is busy. Try copying again."; }
     }
     private void HistoryList_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
@@ -78,6 +95,8 @@ public partial class MainWindow
         HistoryDetailAge.Text = entry.AgeLabel + " at this scan";
         HistoryDetailStatus.Text = entry.StatusLabel + (entry.VisitLabel is { } visit ? " · " + visit : "");
         HistoryDetailTime.Text = "Scanned " + entry.ScannedAt.ToLocalTime().ToString("MMM d, yyyy 'at' h:mm tt");
+        HistoryDetailCopyBarcode.Visibility = BarcodeCopyStatus.Visibility = entry.CanCopyBarcode ? Visibility.Visible : Visibility.Collapsed;
+        BarcodeCopyStatus.Text = "Scanner text contains personal information. Paste it only where intended.";
     }
     private void CustomersList_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
@@ -88,6 +107,7 @@ public partial class MainWindow
         HistoryDetailAge.Text = "Current age: scan the card again";
         HistoryDetailStatus.Text = entry.VisitLabel;
         HistoryDetailTime.Text = entry.LastSeenLabel;
+        HistoryDetailCopyBarcode.Visibility = BarcodeCopyStatus.Visibility = Visibility.Collapsed;
     }
     private void CopyName(string name)
     {

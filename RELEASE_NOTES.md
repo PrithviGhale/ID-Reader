@@ -1,3 +1,11 @@
+# AgeCheck 1.2.3 - Copy a failed scan from History
+
+- Manual-review scans now keep the scanner text in session history and offer Copy scanner text from the row or selected detail card. Control characters are labeled as [LF], [CR], [RS], [GS] and [ETX] so the copied text can be pasted into a support message.
+- Scanner text is held in memory only, capped by the existing 100-entry history limit, and removed by Clear session, disabling session history or closing the app. It is not added to remembered customers or the customer file. Successful scans and demos do not retain it.
+- The Windows clipboard retains copied text until it is replaced. Treat pasted barcode text as personal information.
+
+## Previous release
+
 # AgeCheck 1.2.2 - Two-section cards and safer scanner focus
 
 - Complete supported flattened barcodes with two subfiles can now restore the driver-license section and a jurisdiction section when their directory offsets, lengths, field boundaries, dates and codes agree. This covers a version 08 layout with an optional ZM section and a different field order.

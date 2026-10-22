@@ -29,7 +29,7 @@ A simple Windows app for checking the birth date and expiration date in an ID ba
 | **Scanner text recovery** | Complete supported keyboard frames show an age result directly; incomplete recoveries ask you to confirm the printed dates. |
 | **Uppercase names** | Shows a readable first and last name in ALL CAPS, with a copy button for your rewards form. |
 | **Session history** | Keeps up to 100 names, ages, times and results in memory. Clear it anytime or turn it off. |
-| **Local processing** | Scans stay on this PC. No full barcode, card number, photo, address or date of birth is saved. Optional customer records are encrypted for your Windows account. |
+| **Local processing** | Scans stay on this PC. Failed scanner text can be kept in memory in session History for copying; it clears when the app closes. No full barcode, card number, photo, address or date of birth is saved to the customer file. Optional customer records are encrypted for your Windows account. |
 | **Automatic clearing** | Clears results after 30 seconds, on the next scan, or when you leave the window. |
 | **Works offline** | No internet is needed to check a scan. |
 | **Built-in updates** | Check for updates, read what's new, download, and restart when you choose. |
@@ -58,6 +58,8 @@ A simple Windows app for checking the birth date and expiration date in an ID ba
 - The setup guide is written for the **Honeywell Xenon XP 1950g**. Physical testing with that scanner is still needed.
 
 AgeCheck supports selected US and Canadian AAMVA barcode formats, versions 08–10. Unsupported, incomplete, or conflicting data asks for manual review. It does not support every ID format.
+
+Version **1.2.3** adds **Copy scanner text** to manual-review entries in session History. Failed scan text stays in memory for up to 100 session entries and disappears when history is cleared, turned off or the app closes. It is not stored in remembered customers. Copying places personal barcode data on the Windows clipboard; paste it only where intended.
 
 Version **1.2.2** adds a checked recovery path for complete two-subfile keyboard scans with a jurisdiction section, including a synthetic version 08 layout. It also prevents the title-bar minimize and maximize buttons from retaining scanner keyboard focus.
 

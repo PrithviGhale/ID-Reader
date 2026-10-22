@@ -70,4 +70,21 @@ public class NamesAndHistoryTests
         h.Record(Guid.NewGuid(),new(Outcome.Passed,""),false,false,DateTimeOffset.UtcNow); Assert.Empty(h.Entries);
         h.SetEnabled(true); h.Record(Guid.NewGuid(),new(Outcome.Passed,""),false,false,DateTimeOffset.UtcNow); Assert.Single(h.Entries); h.Clear(); Assert.Empty(h.Entries);
     }
+    [Fact] public void FailedScannerTextLivesOnlyInSessionHistory()
+    {
+        var h = new SessionHistory(); var id = Guid.NewGuid(); const string raw = "SYNTHETIC-FAILED-SCAN";
+        h.Record(id, new(Outcome.Review, "Manual review"), false, false, DateTimeOffset.UtcNow, rawBarcode: raw);
+        Assert.Equal(raw, h.Entries[0].RawBarcode);
+        Assert.DoesNotContain(raw, System.Text.Json.JsonSerializer.Serialize(h.Entries[0]));
+        h.Record(id, new(Outcome.Passed, "Dates confirmed"), false, true, DateTimeOffset.UtcNow);
+        Assert.Equal(raw, h.Entries[0].RawBarcode);
+        h.SetEnabled(false); Assert.Empty(h.Entries);
+    }
+    [Fact] public void PassingAndDemoScansNeverRetainRawText()
+    {
+        var h = new SessionHistory();
+        h.Record(Guid.NewGuid(), new(Outcome.Passed, ""), false, false, DateTimeOffset.UtcNow, rawBarcode: "SYNTHETIC-PASS");
+        h.Record(Guid.NewGuid(), new(Outcome.Review, ""), true, false, DateTimeOffset.UtcNow, rawBarcode: "SYNTHETIC-DEMO");
+        Assert.All(h.Entries, entry => Assert.False(entry.CanCopyBarcode));
+    }
 }

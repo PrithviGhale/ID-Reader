@@ -41,6 +41,14 @@ public partial class MainWindow
         Check(HistoryDetail.Visibility == Visibility.Visible && HistoryDetailName.Text == "ALEX SAMPLE" && HistoryDetailAge.Text.Contains("Age 21"), "Selecting a session scan opens its name and age details");
         CustomersList.SelectedIndex = 0;
         Check(HistoryDetailName.Text == "ALEX SAMPLE" && HistoryDetailAge.Text.Contains("scan the card again"), "Selecting a saved customer opens a privacy-safe detail card");
+        const string failedSample = "SYNTHETIC\nFAILED-SCANNER-TEXT";
+        history.Record(Guid.NewGuid(), new(Outcome.Review, "Manual review"), false, false, DateTimeOffset.Now, rawBarcode: failedSample);
+        HistoryList.SelectedIndex = 0;
+        string? copied = null; var originalClipboard = writeClipboard; writeClipboard = value => copied = value;
+        try { HistoryDetailCopyBarcode_Click(this, new RoutedEventArgs()); }
+        finally { writeClipboard = originalClipboard; }
+        Check(HistoryDetailCopyBarcode.Visibility == Visibility.Visible && copied == "SYNTHETIC[LF]FAILED-SCANNER-TEXT", "Manual-review scanner text can be copied with pasteable control-character labels");
+        history.Clear(); HistoryDetail.Visibility = Visibility.Collapsed;
         Page(SettingsPage);
         DeleteCustomers_Click(this,new RoutedEventArgs()); ConfirmDeleteCustomers_Click(this,new RoutedEventArgs());
         Check(customers.Records.Count == 0, "Confirmed delete removes every remembered customer");
