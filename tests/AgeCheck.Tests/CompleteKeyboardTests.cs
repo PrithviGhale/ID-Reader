@@ -31,6 +31,20 @@ public class CompleteKeyboardTests
         Assert.Equal(Outcome.Passed, result.Outcome);
         Assert.Equal("ALEX SAMPLE", result.DisplayName);
     }
+    [Fact]
+    public void Version08TwoSubfilesWithDifferentFieldOrderShowsAge()
+    {
+        string[] fields = ["DCAD", "DCBNONE", "DCDNONE", "DBA03012031", "DCSSAMPLE", "DACALEX", "DADTEST", "DBD03192026", "DBB03012003", "DBC2", "DAYBRO", "DAU066 in", "DAG57 TEST DR", "DAHNONE", "DAILITTLETOWN", "DAJMA", "DAK014601613  ", "DAQTESTCARD42", "DCF03192026 REV 02222016", "DCGUSA", "DDEN", "DDFN", "DDGN", "DCKSYNTHETIC01", "DDAN", "DDB02222016"];
+        string[] zone = ["ZMA506", "ZMB03192026", "ZMC", "ZMD", "ZME"];
+        string first = "DL" + string.Join('\n', fields) + "\r", second = "ZM" + string.Join('\n', zone) + "\r";
+        string strict = $"@\n\u001e\rANSI 636002080002DL0041{first.Length:D4}ZM{41 + first.Length:D4}{second.Length:D4}{first}{second}";
+        string flat = strict.Replace("@\n\u001e\rANSI ", "@\u00c2NSI ").Replace("\n", "").Replace("\r", "");
+        var result = Barcode.Check(flat, Today, true);
+        Assert.Equal(Outcome.Passed, result.Outcome);
+        Assert.Equal("ALEX SAMPLE", result.DisplayName);
+        Assert.True(result.KeyboardTransport);
+        Assert.Equal(Outcome.Review, Barcode.Check(flat[..^1], Today, true).Outcome);
+    }
 
     [Theory]
     [InlineData(25, false, Outcome.Passed)]

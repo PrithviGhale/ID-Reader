@@ -9,6 +9,7 @@ public partial class MainWindow
     private async Task VerifyCustomerFeatures(List<string> checks)
     {
         void Check(bool ok, string label) { if (!ok) throw new InvalidOperationException(label); checks.Add(label); }
+        Check(!MinimizeButton.Focusable && !MaximizeButton.Focusable, "Window controls cannot keep scanner keyboard focus after a click");
         Page(SettingsPage);
         Check(HomeButton.Visibility == Visibility.Visible && UpdatesPage.IsVisible, "Updates live inside Settings with a visible return-home button");
         SetUpdateAlert(true);

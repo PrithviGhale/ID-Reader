@@ -1,3 +1,11 @@
+# AgeCheck 1.2.2 - Two-section cards and safer scanner focus
+
+- Complete supported flattened barcodes with two subfiles can now restore the driver-license section and a jurisdiction section when their directory offsets, lengths, field boundaries, dates and codes agree. This covers a version 08 layout with an optional ZM section and a different field order.
+- The minimize and maximize buttons no longer retain keyboard focus. A scanner's Enter suffix should not activate a window control after returning to AgeCheck.
+- Added a synthetic two-subfile regression case and a truncation check; incomplete or ambiguous scans still require review. Barcode checks do not verify ID authenticity.
+
+## Previous release
+
 # AgeCheck 1.2.1 - More reliable city boundaries and clickable history
 
 - Complete supported keyboard scans now correctly recover a jurisdiction field when the preceding city ends in D. This fixes a version 09 layout that previously fell into manual review even though its dates and directory length were complete.

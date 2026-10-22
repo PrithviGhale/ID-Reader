@@ -118,7 +118,7 @@ public static partial class Barcode
         // A complete keyboard frame can be restored only when its directory and
         // every inferred separator account for the original encoded length.
         // Do not auto-evaluate headerless recovery or invent missing field values.
-        if (flatHeader && RestoreKeyboardFrame(text) is { } restored)
+        if (flatHeader && (RestoreKeyboardFrame(text) ?? RestoreTwoSubfileFrame(text)) is { } restored)
         {
             var checkedFrame = Check(restored, today);
             return checkedFrame with { KeyboardTransport = true,
@@ -187,6 +187,41 @@ public static partial class Barcode
         }
         string restoredBody = type + string.Join('\n', lines) + "\r";
         return "@\n\u001e\rANSI " + header.Groups[1].Value + type + "0031" + length.ToString("D4", CultureInfo.InvariantCulture) + restoredBody;
+    }
+
+    private static string? RestoreTwoSubfileFrame(string text)
+    {
+        var header = Regex.Match(text, @"^@?ANSI ([0-9]{6}(?:08|09|10)[0-9]{2}02)(DL|ID)0041([0-9]{4})(Z[A-Z])([0-9]{4})([0-9]{4})", RegexOptions.CultureInvariant);
+        if (!header.Success) return null;
+        string firstType = header.Groups[2].Value, zoneType = header.Groups[4].Value;
+        int firstLength = int.Parse(header.Groups[3].Value, CultureInfo.InvariantCulture);
+        int zoneOffset = int.Parse(header.Groups[5].Value, CultureInfo.InvariantCulture);
+        int zoneLength = int.Parse(header.Groups[6].Value, CultureInfo.InvariantCulture);
+        if (zoneOffset != 41 + firstLength || firstLength < 3 || zoneLength < 3) return null;
+        string body = text[header.Length..];
+        int zoneAt = body.IndexOf(zoneType + zoneType, StringComparison.Ordinal);
+        if (zoneAt < 3 || body.IndexOf(zoneType + zoneType, zoneAt + 1, StringComparison.Ordinal) >= 0) return null;
+        string first = body[..zoneAt], zone = body[zoneAt..];
+        if (!first.StartsWith(firstType, StringComparison.Ordinal) || !zone.StartsWith(zoneType, StringComparison.Ordinal)) return null;
+        string? Restore(string raw, string type, int encodedLength, bool jurisdiction)
+        {
+            var matches = Regex.Matches(raw[2..], jurisdiction ? @"Z[A-Z]{2}" : @"D[A-QS-Z]{2}", RegexOptions.CultureInvariant)
+                .Select(m => (Index:m.Index, Code:m.Value)).ToList();
+            if (matches.Count == 0 || matches[0].Index != 0 || raw.Length + matches.Count != encodedLength) return null;
+            var lines = new List<string>();
+            for (int i = 0; i < matches.Count; i++)
+            {
+                int start = matches[i].Index + 2, end = i + 1 < matches.Count ? matches[i + 1].Index + 2 : raw.Length;
+                lines.Add(raw[start..end]);
+            }
+            return type + string.Join('\n', lines) + "\r";
+        }
+        var restoredFirst = Restore(first, firstType, firstLength, false);
+        var restoredZone = Restore(zone, zoneType, zoneLength, true);
+        if (restoredFirst == null || restoredZone == null) return null;
+        return "@\n\u001e\rANSI " + header.Groups[1].Value + firstType + "0041" + firstLength.ToString("D4", CultureInfo.InvariantCulture)
+            + zoneType + zoneOffset.ToString("D4", CultureInfo.InvariantCulture) + zoneLength.ToString("D4", CultureInfo.InvariantCulture)
+            + restoredFirst + restoredZone;
     }
 
     private static (string? First,string? Last,string? Note) ReadName(Dictionary<string,string> fields)
