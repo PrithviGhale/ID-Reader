@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="src/AgeCheck/Assets/Logo.png" alt="AgeCheck blue iD logo" width="150">
+
 # AgeCheck
 
 ### Scan an ID. Check the age. Keep it private.
@@ -14,7 +16,15 @@ A simple Windows app for checking the birth date and expiration date in an ID ba
 
 </div>
 
-![AgeCheck app showing the Ready to scan screen](docs/images/ready.png)
+![AgeCheck showing a 21 or older result with made-up demo data](docs/images/passed.png)
+
+*The screenshot uses a made-up demo card, not a customer's ID.*
+
+## Why I made AgeCheck
+
+I made AgeCheck to help a local business check IDs for 21+ products more quickly and consistently. It reads the barcode with a scanner, shows the person's age and whether the barcode dates say **21 or older**, **Under 21**, or **Expired**, and makes it clear when staff need to review a card themselves. The age check works offline, with customer information kept on the business's PC.
+
+One thing I found interesting while building it: a scanner can send the information in an ID barcode as keyboard input, but small differences in how it sends line breaks can change whether that information is readable. Even a complete barcode scan only checks the data in the barcode. Staff still need to compare the printed dates, photo, and person to assess the physical ID.
 
 ## What it does
 
