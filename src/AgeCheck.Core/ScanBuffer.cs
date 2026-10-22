@@ -15,5 +15,6 @@ public sealed class ScanBuffer
         return true;
     }
     public string Take() { var text = buffer.ToString(); Clear(); return text; }
+    public string Snapshot() => buffer.ToString();
     public void Clear() { buffer.Clear(); Overflowed = false; }
 }

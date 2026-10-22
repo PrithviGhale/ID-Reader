@@ -60,6 +60,38 @@ public partial class MainWindow
         RaiseEvent(blocked); Check(!scan.Receiving,"Scanner capture disabled outside Scan page");
         Page(ScanPage);
         await VerifyScannerTransport(checks);
+        await VerifyCompleteKeyboardCapture(checks);
+    }
+
+    private async Task VerifyCompleteKeyboardCapture(List<string> checks)
+    {
+        void Check(bool ok, string label) { if (!ok) throw new InvalidOperationException(label); checks.Add(label); }
+        history.Clear(); Page(ScanPage); Activate();
+        foreach (var (years, expired, expected) in new[] { (25, false, "21 or older"), (19, false, "Under 21"), (25, true, "Expired") })
+        {
+            string sample = Demo.CompleteKeyboard(Today.AddYears(-years), expired ? Today.AddDays(-1) : Today.AddYears(2), Today.AddYears(-1));
+            // A pause longer than the old quiet period must not submit a partial card.
+            Receive(sample[..40]); await Task.Delay(950);
+            Check(scan.Receiving && !showingResult, "Partial scan survives a 950 ms keyboard pause");
+            foreach (char character in sample[40..])
+            {
+                var input = new TextCompositionEventArgs(Keyboard.PrimaryDevice, new TextComposition(InputManager.Current, this, character.ToString()))
+                    { RoutedEvent = TextCompositionManager.PreviewTextInputEvent };
+                RaiseEvent(input); Check(input.Handled, "Complete keyboard frame character captured");
+            }
+            await WaitForScanResult();
+            Check(Headline.Text == expected && RecoveryNotice.Visibility == Visibility.Collapsed, "Complete keyboard scan shows direct outcome: " + expected);
+            Check(history.Entries[0].Outcome != Outcome.Review, "History records the age outcome without confirmation");
+        }
+        Check(history.Entries.Count == 3, "Three paused scans create exactly three history entries");
+        Clear();
+        // Input must remain captured while a background parse is in flight.
+        processing = true;
+        var duringParse = new TextCompositionEventArgs(Keyboard.PrimaryDevice, new TextComposition(InputManager.Current, this, "@"))
+            { RoutedEvent = TextCompositionManager.PreviewTextInputEvent };
+        RaiseEvent(duringParse); processing = false;
+        Check(duringParse.Handled && scan.Snapshot() == "@", "Incoming characters are retained during background processing");
+        Clear(); history.Clear(); UpdateHistoryUI();
     }
 
     private async Task VerifyScannerTransport(List<string> checks)

@@ -2,6 +2,12 @@ using System.Globalization;
 namespace AgeCheck.Core;
 public static class Demo
 {
+    public static string CompleteKeyboard(DateOnly birth, DateOnly expiry, DateOnly issued, string first = "ALEX", string last = "SAMPLE")
+    {
+        string Date(DateOnly value) => value.ToString("MMddyyyy", CultureInfo.InvariantCulture);
+        string body = $"DLDAQSYNTHETIC0001\nDCS{last}\nDDEN\nDAC{first}\nDDFN\nDADTEST\nDDGN\nDCAD\nDCBNONE\nDCDNONE\nDBD{Date(issued)}\nDBB{Date(birth)}\nDBA{Date(expiry)}\nDBC1\nDAU071 IN\nDAYBLK\nDAG100 EXAMPLE ST\nDAIMANCHESTER\nDAJNH\nDAK033010000  \nDCFSYNTHETIC0002\nDCGUSA\nDCKSYNTHETIC0002\nDDAN\nDDB01012024\r";
+        return $"@\u00c2NSI 636039100001DL0031{body.Length:D4}{body.Replace("\n", "").Replace("\r", "")}";
+    }
     public static string KeyboardHeader(DateOnly birth, DateOnly expiry, DateOnly issued, string country = "USA")
     {
         var data = "DLDAQSYNTHETIC0001D" + Flattened(birth, expiry, issued, country);

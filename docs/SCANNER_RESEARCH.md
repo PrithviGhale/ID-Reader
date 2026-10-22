@@ -1,5 +1,14 @@
 # Scanner compatibility notes
 
+## October 22, 2026 comparison and capture repair
+
+[VeriScan Desktop documentation](https://docs.idscan.net/veriscandesktop/) describes reading the encoded birth/expiration dates, showing age, and maintaining a short scan history. [VeriScan alert documentation](https://support.idscan.net/what-kind-of-alerts-are-available-in-veriscan-and-what-do-they-mean) distinguishes underage/expiration alerts from barcode-security alerts. AgeCheck provides date calculations and consistency checks, without claiming those vendors' proprietary security features.
+
+Honeywell's [1950g product page](https://automation.honeywell.com/us/en/products/productivity-solutions/barcode-scanners/general-purpose-handheld/xenon-xp-1950g-general-duty-scanner) confirms PDF417 support. Its official full user-guide download remained access-restricted, so no unverified configuration barcodes are reproduced. Physical configuration remains a deployment check.
+
+The original 700 ms quiet-period submission and capture disabled during background parsing could split/drop delayed input. Version 1.1.2 retains the buffer until a parse result matches the latest input revision, continues capturing during parsing, and grants incomplete input a 2-second quiet period. Screenshots alone do not prove which transport event caused prior failures.
+
+The complete keyboard profile restores inferred field separators only with matching directory length and complete first/last fields, then reuses strict checks. The older statement below that all recovered scans require confirmation applies to the older assisted path; complete supported frames now produce direct age results.
 ## Version 1.1.1 transport coverage
 
 The assisted path also recognizes supported header tokens after partial keyboard separators (CR, LF, Tab and RS), with optional `]L0` and the existing missing-`@` case. It canonicalizes only that fixed token and only in recovery. Mixed field separators are removed for the assisted calculation; strict byte-offset validation remains unchanged. Unknown accent mutations, unexpected controls, changed personal values, ambiguous fields, malformed dates and multiple cards remain review cases.

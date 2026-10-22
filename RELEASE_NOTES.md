@@ -1,3 +1,12 @@
+# AgeCheck 1.1.2 - Direct keyboard age results and steadier capture
+
+- Complete supported flattened keyboard scans now show 21+, Under 21 or Expired directly, without a confirmation click. The app checks the encoded directory length, inferred field boundaries, unique required dates, country and date consistency before using this path.
+- The automatic compatibility profile requires one DL/ID subfile at offset 31, an initial DAQ and a terminal eight-digit DDB revision date. Ambiguous or unsupported layouts retain assisted recovery or review. A recovered partial card never automatically passes.
+- A pause in an incomplete transmission now gets up to 2 seconds for more input instead of immediately submitting after 700 ms. Characters arriving during background parsing stay buffered; stale parse results are discarded.
+- History records the direct age outcome. No personal scanner samples are included in public source or tests.
+- Includes the WPF editor markup repair and remaining code cleanup. ID authenticity remains unverified; physical scanner and installed-to-installed update checks remain necessary.
+
+## Previous release
 # AgeCheck 1.1.1 — Keyboard scanner compatibility
 
 - Recover supported keyboard scanner headers when only some line breaks, tabs or record separators survive, including the known composed/decomposed accented header. Recovered scans still require printed-date confirmation.

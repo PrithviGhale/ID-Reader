@@ -14,6 +14,13 @@ The application also accepts intact literal control characters, but keyboard int
 
 ## Troubleshooting
 
+### Direct keyboard results in 1.1.2
+
+Complete supported keyboard frames show 21+, Under 21 or Expired without a confirmation click. The compatibility profile requires a single DL/ID subfile at offset 31, initial DAQ, terminal eight-digit DDB and an exact reconstructed length. The app then checks the dates, country, revision and optional consistency fields. Other flattened layouts retain the confirmation flow described below. Unknown, incomplete and conflicting data still need review.
+
+Capture waits 700 ms for a complete scan, and gives incomplete input up to 2 seconds of silence to finish. Input arriving during background parsing is retained rather than dropped. The absolute 20-second deadline still applies. Excessive scanner delays or an inactive window can still prevent a complete scan.
+
+
 ### Some line breaks remain but the header is still rejected
 
 Version **1.1.1** adds assisted recovery for supported headers where the scanner sends only some of the expected CR/LF/RS separators, including the known accented header after a line break. It also accepts tabs in the assisted field stream. Compare the displayed birth and expiration dates with the physical card before confirming. Other unknown character substitutions or ambiguous fields remain manual review. Correcting the scanner transport is still the way to enable full framing checks.
@@ -36,7 +43,7 @@ Recovered dates appear with **Check the printed dates**. Compare the birth and e
 | --- | --- |
 | Scanner beeps, nothing happens | Click AgeCheck, select Scan an ID, and check USB keyboard mode. The beep is only a decode indication. |
 | Unsupported header | Check control substitutions, prefix settings and the keyboard layout. Only AAMVA ANSI versions 08–10 are supported. |
-| Truncated or inconsistent length | Disable editing/stripping of control characters. Ensure the entire barcode is transmitted. A pause over 700 ms can terminate a partial transmission. |
+| Truncated or inconsistent length | Disable editing/stripping of control characters. Ensure the entire barcode is transmitted. Incomplete transmissions get 2 seconds of silence before review; reduce excessive scanner delays. |
 | Scan exceeds 20 seconds | Reduce excessive inter-character delays and retry after Clear. |
 | Input limit exceeded | Choose Clear and confirm the scanner is transmitting just one ID, not a batch. |
 | Valid card still needs review | Compare printed dates manually. Do not treat a scan problem as proof of a counterfeit. Unsupported formats deliberately fail closed. |

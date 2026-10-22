@@ -29,6 +29,8 @@ public partial class MainWindow : Window
     private UpdateInfo? update;
     private bool updateBusy, downloaded, processing, inputBlocked, showingResult;
     private int scanGeneration;
+    private int inputRevision;
+    private long lastInputAt;
     private CheckResult? recoveredDates;
     private bool recoveryDemo;
     private bool darkTheme = true;
@@ -38,7 +40,7 @@ public partial class MainWindow : Window
     private static bool suppressAnimations;
     private readonly string settingsPath;
     private static DateOnly Today => DateOnly.FromDateTime(DateTime.Now);
-    private bool CanCapture => IsActive && ScanPage.Visibility == Visibility.Visible && !processing && !inputBlocked && !drawerOpen;
+    private bool CanCapture => IsActive && ScanPage.Visibility == Visibility.Visible && !inputBlocked && !drawerOpen;
 
     public MainWindow(string[] args)
     {
@@ -132,19 +134,31 @@ public partial class MainWindow : Window
             ShowResult(new(Outcome.Review, "Input limit exceeded. Choose Clear / Next customer before rescanning."), false);
             return;
         }
-        quiet.Stop(); quiet.Start();
+        inputRevision++; lastInputAt = System.Diagnostics.Stopwatch.GetTimestamp();
+        quiet.Stop(); quiet.Interval = TimeSpan.FromMilliseconds(700); quiet.Start();
     }
     private async Task FinishScan()
     {
-        quiet.Stop(); deadline.Stop();
+        quiet.Stop();
         if (!scan.Receiving) return;
-        processing = true; int generation = scanGeneration;
+        if (processing) { quiet.Start(); return; }
+        processing = true; int generation = scanGeneration, revision = inputRevision;
         Phase.Text = "PROCESSING"; Headline.Text = "Checking dates…";
-        string raw = scan.Take();
+        string raw = scan.Snapshot();
         var result = await Task.Run(() => Barcode.Check(raw, Today, allowScannerRecovery: true));
         raw = string.Empty;
         processing = false;
-        if (generation == scanGeneration && IsActive) ShowResult(result, false);
+        if (generation != scanGeneration || revision != inputRevision || !IsActive) return;
+        // Incomplete input gets additional time to survive USB/keyboard pauses.
+        // The absolute deadline still bounds a never-ending transmission.
+        double idle = System.Diagnostics.Stopwatch.GetElapsedTime(lastInputAt).TotalMilliseconds;
+        if (result.Outcome == Outcome.Review && idle < 2000)
+        {
+            quiet.Interval = TimeSpan.FromMilliseconds(Math.Max(1, 2000 - idle)); quiet.Start();
+            Phase.Text = "RECEIVING"; Headline.Text = "Waiting for the rest of the scan";
+            return;
+        }
+        deadline.Stop(); scan.Clear(); ShowResult(result, false);
     }
     private void Clear()
     {
@@ -179,7 +193,7 @@ public partial class MainWindow : Window
         };
         ResultSubtitle.Text = result.Outcome switch
         {
-            Outcome.Passed => "Barcode age check passed",
+            Outcome.Passed => result.KeyboardTransport ? "Scanned dates meet the 21+ age threshold" : "Barcode age check passed",
             Outcome.Under21 => "Barcode birth date is below the age threshold",
             Outcome.Expired => "Barcode expiration date has passed",
             _ => result.NeedsDateConfirmation ? "Scanner text recovered · confirmation needed" : "Manual review required"

@@ -24,7 +24,7 @@ A simple Windows app for checking the birth date and expiration date in an ID ba
 | **Expiration check** | Shows when the ID's barcode expiration date has passed. |
 | **Clear results** | Large text shows 21+, Under 21, Expired, or Manual review. |
 | **Date comparison** | Shows the birth date and expiration date so you can compare them with the card. |
-| **Scanner text recovery** | Can recover dates from supported scans with missing headers or line breaks, then asks you to confirm the printed dates. |
+| **Scanner text recovery** | Complete supported keyboard frames show an age result directly; incomplete recoveries ask you to confirm the printed dates. |
 | **Uppercase names** | Shows a readable first and last name in ALL CAPS, with a copy button for your rewards form. |
 | **Session history** | Keeps up to 100 names, times and results in memory until you close the app. Clear it anytime or turn it off. |
 | **Local processing** | Does not write scan history, raw barcodes or ID details to disk. Copying a name puts it on your Windows clipboard. |
@@ -59,11 +59,12 @@ AgeCheck supports selected US and Canadian AAMVA barcode formats, versions 08–
 
 ### If your scanner sends one long line
 
+Version **1.1.2** shows **21+**, **Under 21**, or **Expired** directly for complete supported keyboard frames, including the supplied New Hampshire layout. It restores field separators only when the directory length matches exactly and the supported first/last fields are complete, then runs the date and field checks. Other recovered text still requires confirmation; conflicting dates remain review. Incomplete input now gets 2 seconds to finish, and incoming characters remain captured during parsing. This does not verify authenticity.
 Version **1.1.1** also handles supported headers where the scanner preserves only some line breaks, tabs or record separators, including accented header tokens after line breaks. Recovered names include a reminder to compare with the printed card. Open **App updates** to install the new release; Setup installations on the current package identity can update in place.
 
 Version **1.0.3** recovers unique date and country fields from supported flattened scanner output, including the specific `@ÂNSI` header variation, missing separators, or a missing header/first field character. Instead of stopping at that header error, it shows **Check the printed dates**. Compare both dates with the physical ID, then choose **Both dates match the card**. The app calculates the age and expiration result from those confirmed dates.
 
-This is a **date-only check**. Missing separators mean the app cannot prove the whole barcode arrived. It never gives an automatic pass from recovered text. Missing, invalid, or conflicting dates still need manual review. For full barcode validation, use the recommended [scanner settings](docs/SCANNER_SETUP.md).
+This is a **date-only check**. Missing separators mean the app cannot prove the whole barcode arrived. Only the complete supported keyboard profile can produce a direct result; other recovered text still requires confirmation. Missing, invalid, or conflicting dates still need manual review. For full barcode validation, use the recommended [scanner settings](docs/SCANNER_SETUP.md).
 
 <details>
 <summary>See the new scanner recovery screen</summary>

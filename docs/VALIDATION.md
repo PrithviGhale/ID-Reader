@@ -1,5 +1,15 @@
 # Validation record
 
+## Version 1.1.2 direct keyboard results (October 22, 2026)
+
+- Complete supported keyboard frames are reconstructed using the original single-subfile directory, exact encoded length, initial DAQ and terminal eight-digit DDB. Strict date, duplicate-field, country, revision and optional consistency checks then run. Other layouts retain assisted recovery or review; this is not authenticity verification.
+- Both privately supplied exact strings now return 21+ with a name and no date-confirmation requirement. Every incomplete prefix of both strings remains Review. Private harness source and build outputs are removed after checking and never committed.
+- **156 core tests pass**, including automatic adult/exactly-21/underage/expired outcomes, supported keyboard header variants, every incomplete prefix and every single-character body deletion, joined cards, corruption and ambiguous field markers. Existing recovery tests remain passing.
+- Debug build has zero errors/warnings. The WPF self-test passes direct adult/underage/expired outcomes through routed character input, three 950 ms mid-scan pauses without premature history rows, capture during processing, and the existing privacy/theme/history checks. This identifies and protects against software capture races; the physical cause of earlier failed scans cannot be determined from screenshots alone.
+- The self-contained 1.1.2 packaged app also passed its UI self-test. All 220 layout cases passed across two themes and ten viewports; the updated setup text was visually checked at 800x600.
+- WPF editor generation still produces all 63 named controls. Prior live VS Code diagnostics were independently verified at zero errors, zero warnings and zero suggestions after the editor repair.
+- Physical Honeywell testing and a complete installed-version upgrade still need deployment verification. Successful parser/UI tests do not guarantee every damaged card or arbitrary scanner configuration.
+
 ## VS Code markup-generation repair (October 21, 2026)
 
 - The active editor logs reported `Cannot find the type 'Outcome'` during WPF's editor markup pass. A probe that withholds the referenced project assembly reproduced `MC3050` and generated no `MainWindow` source, explaining the cascading missing-control errors.

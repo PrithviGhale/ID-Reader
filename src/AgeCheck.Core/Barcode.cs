@@ -5,7 +5,7 @@ namespace AgeCheck.Core;
 
 public enum Outcome { Passed, Under21, Expired, Review }
 public sealed record CheckResult(Outcome Outcome, string Detail, DateOnly? Birth = null, DateOnly? Expiration = null, bool NeedsDateConfirmation = false,
-    string? FirstName = null, string? LastName = null, string? NameNote = null)
+    string? FirstName = null, string? LastName = null, string? NameNote = null, bool KeyboardTransport = false)
 {
     public string? DisplayName => FirstName != null && LastName != null ? FirstName + " " + LastName : null;
 }
@@ -111,6 +111,16 @@ public static partial class Barcode
         if (text.Any(c => char.IsControl(c) && c is not ('\r' or '\n' or '\t' or '\u001e')))
             return Bad("Unexpected scanner control characters. Rescan or check manually.");
         text = text.Replace("\r", "").Replace("\n", "").Replace("\t", "").Replace("\u001e", "");
+        // A complete keyboard frame can be restored only when its directory and
+        // every inferred separator account for the original encoded length.
+        // Do not auto-evaluate headerless recovery or invent missing field values.
+        if (flatHeader && RestoreKeyboardFrame(text) is { } restored)
+        {
+            var checkedFrame = Check(restored, today);
+            return checkedFrame with { KeyboardTransport = true,
+                Detail = checkedFrame.Outcome == Outcome.Review ? checkedFrame.Detail
+                    : "Age and expiration calculated from the scanned dates. Compare the photograph and printed card with the customer. ID authenticity is not verified." };
+        }
         var recovered = new Dictionary<string, string>();
         foreach (var key in new[] { "DCG", "DBB", "DBA", "DBD", "DDH", "DDI", "DDJ", "DDB", "DBC", "DDA", "DDE", "DDF", "DDG" })
         {
@@ -132,6 +142,33 @@ public static partial class Barcode
         return result with { Outcome = Outcome.Review, NeedsDateConfirmation = true,
             NameNote = result.DisplayName == null ? result.NameNote : "Recovered name: compare it with the printed card before copying.",
             Detail = "Dates recovered from scanner text. Formatting is incomplete, so full barcode checks are unavailable. Compare both dates with the printed card, then confirm below." };
+    }
+
+    private static string? RestoreKeyboardFrame(string text)
+    {
+        var header = Regex.Match(text, @"^@?ANSI ([0-9]{6}(?:08|09|10)[0-9]{2}01)(DL|ID)0031([0-9]{4})", RegexOptions.CultureInvariant);
+        if (!header.Success) return null;
+        string type = header.Groups[2].Value;
+        string body = text[header.Length..];
+        if (!body.StartsWith(type, StringComparison.Ordinal)) return null;
+        var fields = Regex.Matches(body[2..], @"D[A-Z]{2}|Z[A-Z]{2}", RegexOptions.CultureInvariant);
+        if (fields.Count == 0 || fields[0].Index != 0) return null;
+        // This compatibility profile has an account number first and a fixed-width
+        // revision date last. A plausible date found midway through a transmission
+        // is insufficient evidence that the whole card arrived.
+        if (fields[0].Value != "DAQ" || fields[^1].Value != "DDB" || body.Length - fields[^1].Index - 2 != 11) return null;
+        int length = int.Parse(header.Groups[3].Value, CultureInfo.InvariantCulture);
+        int restoredLength = body.Length + fields.Count; // inter-field LF plus final CR
+        if (length != restoredLength) return null;
+        var lines = new List<string>();
+        for (int i = 0; i < fields.Count; i++)
+        {
+            int start = fields[i].Index + 2;
+            int end = i + 1 < fields.Count ? fields[i + 1].Index + 2 : body.Length;
+            lines.Add(body[start..end]);
+        }
+        string restoredBody = type + string.Join('\n', lines) + "\r";
+        return "@\n\u001e\rANSI " + header.Groups[1].Value + type + "0031" + length.ToString("D4", CultureInfo.InvariantCulture) + restoredBody;
     }
 
     private static (string? First,string? Last,string? Note) ReadName(Dictionary<string,string> fields)
