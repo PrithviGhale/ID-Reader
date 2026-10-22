@@ -32,6 +32,31 @@ internal static class ImageBarcodeReader
             }
         };
         var result = reader.Decode(bitmap);
-        return result?.BarcodeFormat == BarcodeFormat.PDF_417 ? result.Text : null;
+        if (result?.BarcodeFormat == BarcodeFormat.PDF_417) return result.Text;
+
+        // Phone photos often devote only a small part of the frame to the ID.
+        // Try overlapping regions so the PDF417 detector sees the barcode at a useful scale.
+        foreach (var (widthPercent, heightPercent) in new[] { (45, 60), (30, 50) })
+        {
+            int tileWidth = Math.Min(bitmap.Width, Math.Max(400, bitmap.Width * widthPercent / 100));
+            int tileHeight = Math.Min(bitmap.Height, Math.Max(650, bitmap.Height * heightPercent / 100));
+            foreach (int y in Positions(bitmap.Height, tileHeight))
+            foreach (int x in Positions(bitmap.Width, tileWidth))
+            {
+                using var tile = bitmap.Clone(new Rectangle(x, y, tileWidth, tileHeight), bitmap.PixelFormat);
+                result = reader.Decode(tile);
+                if (result?.BarcodeFormat == BarcodeFormat.PDF_417) return result.Text;
+            }
+        }
+        return null;
+    }
+
+    private static IEnumerable<int> Positions(int length, int tile)
+    {
+        if (tile >= length) { yield return 0; yield break; }
+        int last = length - tile;
+        int step = Math.Max(1, tile / 2);
+        for (int position = 0; position < last; position += step) yield return position;
+        yield return last;
     }
 }

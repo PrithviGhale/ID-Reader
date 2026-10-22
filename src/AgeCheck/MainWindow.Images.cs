@@ -68,7 +68,7 @@ public partial class MainWindow
             if (generation != imageGeneration || activePage != ImagePage) return;
             if (decoded is null)
             {
-                ImageStatus.Text = "No readable PDF417 barcode found. Include the whole barcode, remove glare, and try a sharper photo. Review the physical card if it still fails.";
+                ImageStatus.Text = "The PDF417 barcode could not be read. In this photo it may be too small or blurry. Move closer, keep the full barcode in frame, tap the barcode to focus, and use even light. If it still fails, scan the physical card or review it manually.";
                 return;
             }
             if (decoded.Length > Barcode.InputLimit)
@@ -105,6 +105,22 @@ public partial class MainWindow
                 Options = new EncodingOptions { Width = 1100, Height = 320, Margin = 24 }
             };
             using var bitmap = writer.Write(raw);
+            using (var distant = new DrawingBitmap(2160, 2880))
+            using (var sideways = new DrawingBitmap(bitmap))
+            {
+                sideways.RotateFlip(System.Drawing.RotateFlipType.Rotate90FlipNone);
+                using (var graphics = System.Drawing.Graphics.FromImage(distant))
+                {
+                    graphics.Clear(System.Drawing.Color.Beige);
+                    graphics.DrawImageUnscaled(sideways, 1400, 800);
+                }
+                using var distantStream = new MemoryStream();
+                distant.Save(distantStream, System.Drawing.Imaging.ImageFormat.Png);
+                var distantText = ImageBarcodeReader.Decode(distantStream.ToArray());
+                if (distantText is null || Barcode.Check(distantText, Today).Outcome != Outcome.Passed)
+                    throw new InvalidDataException("Distant sideways synthetic PDF417 did not decode.");
+                checks.Add("Distant sideways PDF417 in a full photo decoded");
+            }
             foreach (var rotation in new[] { System.Drawing.RotateFlipType.RotateNoneFlipNone, System.Drawing.RotateFlipType.Rotate90FlipNone, System.Drawing.RotateFlipType.Rotate180FlipNone })
             {
                 using var variant = new DrawingBitmap(bitmap);

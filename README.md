@@ -56,6 +56,8 @@ One thing I found interesting while building it: a scanner can send the informat
 
 To check a photo, open **☰ → Image Scanner**, copy a clear photo of the entire barcode and choose **Paste photo**. **Open image file** also accepts JPG, PNG and BMP. This uses the same date and field checks as a scanner result. A blurry, cropped or glare-covered image may not decode; the app gives photo tips and asks for another image or manual review. Photos are processed in memory and are not saved by AgeCheck. The free [ZXing.Net](https://github.com/micjahn/ZXing.Net) PDF417 decoder runs on your PC; no cloud AI account is required. A readable barcode still cannot prove the physical ID is authentic.
 
+If the barcode is small within a larger photo, AgeCheck also searches overlapping parts of the picture. For best results, take the photo closer and tap the barcode to focus. Enlarging an already blurry photo cannot restore missing detail.
+
 ![AgeCheck Image Scanner tab with paste and open-photo buttons](docs/images/image.png)
 
 1. **[Open the latest release](https://github.com/PrithviGhale/ID-Reader/releases/latest)** and download **`AgeCheck-win-x64-Setup.exe`**.
