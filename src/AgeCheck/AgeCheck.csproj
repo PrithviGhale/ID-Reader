@@ -27,6 +27,8 @@
   <ItemGroup>
     <ApplicationDefinition Remove="App.xaml" />
     <Page Include="App.xaml" />
+    <Resource Include="Assets/Logo.png" />
+    <Resource Include="Assets/AgeCheck.ico" />
     <Content Include="../../release-config.json" Link="release-config.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 

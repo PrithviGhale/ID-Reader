@@ -1,3 +1,10 @@
+# AgeCheck 1.2.4 - New app icon
+
+- The supplied blue iD artwork is now used for the Windows executable, installer, app window and in-app header mark. The icon includes transparent 16, 32, 48, 64, 128 and 256 pixel sizes for taskbar and desktop use.
+- Scanner and history behavior remains unchanged.
+
+## Previous release
+
 # AgeCheck 1.2.3 - Copy a failed scan from History
 
 - Manual-review scans now keep the scanner text in session history and offer Copy scanner text from the row or selected detail card. Control characters are labeled as [LF], [CR], [RS], [GS] and [ETX] so the copied text can be pasted into a support message.
