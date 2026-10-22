@@ -36,6 +36,11 @@ public partial class MainWindow
         Page(SettingsPage); RecognitionEnabled.IsChecked=true; RecognitionEnabled_Click(this,new RoutedEventArgs());
         DeleteCustomers_Click(this,new RoutedEventArgs()); CancelDeleteCustomers_Click(this,new RoutedEventArgs());
         Check(customers.Records.Count == count, "Canceling deletion preserves saved customers");
+        Page(HistoryPage); HistoryList.SelectedIndex = 0;
+        Check(HistoryDetail.Visibility == Visibility.Visible && HistoryDetailName.Text == "ALEX SAMPLE" && HistoryDetailAge.Text.Contains("Age 21"), "Selecting a session scan opens its name and age details");
+        CustomersList.SelectedIndex = 0;
+        Check(HistoryDetailName.Text == "ALEX SAMPLE" && HistoryDetailAge.Text.Contains("scan the card again"), "Selecting a saved customer opens a privacy-safe detail card");
+        Page(SettingsPage);
         DeleteCustomers_Click(this,new RoutedEventArgs()); ConfirmDeleteCustomers_Click(this,new RoutedEventArgs());
         Check(customers.Records.Count == 0, "Confirmed delete removes every remembered customer");
         Page(ScanPage); DemoResult(25);

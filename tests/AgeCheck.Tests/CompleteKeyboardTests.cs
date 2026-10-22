@@ -8,6 +8,30 @@ public class CompleteKeyboardTests
     private static string Sample(int years = 25, bool expired = false) => Demo.CompleteKeyboard(
         Today.AddYears(-years), expired ? Today.AddDays(-1) : Today.AddYears(2), Today.AddYears(-1));
 
+    [Fact]
+    public void CityEndingInDDoesNotHideJurisdictionField()
+    {
+        string original = Sample();
+        string changed = original.Replace("MANCHESTERDAJNH", "GREENFIELDDAJCA", StringComparison.Ordinal);
+        // The directory length must reflect the actual transmitted barcode.
+        int originalLength = int.Parse(changed.Substring(24, 4));
+        changed = changed[..24] + (originalLength + changed.Length - original.Length).ToString("D4") + changed[28..];
+        var result = Barcode.Check(changed, Today, true);
+        Assert.Equal(Outcome.Passed, result.Outcome);
+    }
+    [Fact]
+    public void Version09FlattenedCityEndingDShowsAge()
+    {
+        string body = "DLDAQSYNTHETIC42DCSSAMPLEDDENDACALEXDDFNDADTESTDDGNDCADDCBNONEDCDNONEDBD10302024DBB09201985DBA09202028DBC2DAU066 inDAYBLUDAG19 TEST LNDAHNONEDAILGREENFIELDDAJNHDAK030520000  DCFSYNTHETIC01DCGUSADCKSYNTHETIC01DDANDDB06092016";
+        int fieldCount = System.Text.RegularExpressions.Regex.Matches(body[2..], @"D[A-Z]{2}|Z[A-Z]{2}").Count;
+        // The city marker overlaps with DAJ, so count the actual fields instead.
+        int encodedLength = body.Length + fieldCount;
+        var frame = $"@\u00c2NSI 636039090001DL0031{encodedLength:D4}{body}";
+        var result = Barcode.Check(frame, Today, true);
+        Assert.Equal(Outcome.Passed, result.Outcome);
+        Assert.Equal("ALEX SAMPLE", result.DisplayName);
+    }
+
     [Theory]
     [InlineData(25, false, Outcome.Passed)]
     [InlineData(21, false, Outcome.Passed)]

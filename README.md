@@ -59,6 +59,8 @@ A simple Windows app for checking the birth date and expiration date in an ID ba
 
 AgeCheck supports selected US and Canadian AAMVA barcode formats, versions 08–10. Unsupported, incomplete, or conflicting data asks for manual review. It does not support every ID format.
 
+Version **1.2.1** repairs a complete flattened scan when a city ending in D is followed by the DAJ jurisdiction field, and adds a selectable detail card in History. A session entry shows the age calculated at scan time; saved customers have no stored birth date and require a fresh scan for current age or expiration.
+
 ### If your scanner sends one long line
 
 Version **1.1.2** shows **21+**, **Under 21**, or **Expired** directly for complete supported keyboard frames, including the supplied New Hampshire layout. It restores field separators only when the directory length matches exactly and the supported first/last fields are complete, then runs the date and field checks. Other recovered text still requires confirmation; conflicting dates remain review. Incomplete input now gets 2 seconds to finish, and incoming characters remain captured during parsing. This does not verify authenticity.

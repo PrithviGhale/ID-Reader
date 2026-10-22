@@ -1,3 +1,11 @@
+# AgeCheck 1.2.1 - More reliable city boundaries and clickable history
+
+- Complete supported keyboard scans now correctly recover a jurisdiction field when the preceding city ends in D. This fixes a version 09 layout that previously fell into manual review even though its dates and directory length were complete.
+- Click a session scan or a remembered customer in History to open a detail card with their name, scan status and time. Session scans show the age calculated at that scan. Remembered customers need a fresh scan for current age and expiration; the protected customer file still does not store birth dates.
+- Added synthetic regression cases for the affected layout and a California jurisdiction, alongside the existing multi-state AAMVA specimen tests. Incomplete or conflicting scans still require review. A barcode result does not establish ID authenticity.
+
+## Previous release
+
 # AgeCheck 1.2.0 - A clearer counter and familiar faces
 
 - A redesigned violet/mint interface, a large current-age readout, clearer scan results and a home icon to return to Scan.

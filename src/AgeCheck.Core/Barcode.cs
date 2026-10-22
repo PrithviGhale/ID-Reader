@@ -155,12 +155,26 @@ public static partial class Barcode
         string type = header.Groups[2].Value;
         string body = text[header.Length..];
         if (!body.StartsWith(type, StringComparison.Ordinal)) return null;
-        var fields = Regex.Matches(body[2..], @"D[A-Z]{2}|Z[A-Z]{2}", RegexOptions.CultureInvariant);
+        // A field value may end in D immediately before DAJ (for example, a city
+        // ending in D). Non-overlapping regex matches would consume the first D
+        // as a false DDA and hide the real DAJ. Correct that narrow boundary.
+        var fields = Regex.Matches(body[2..], @"D[A-Z]{2}|Z[A-Z]{2}", RegexOptions.CultureInvariant)
+            .Select(m => (Index: m.Index, Code: m.Value)).ToList();
+        for (int i = 1; i < fields.Count; i++)
+        {
+            var field = fields[i];
+            // A city ending in D followed by DAJ appears as ...DDAJxx.
+            // Require the prior city field and a two-letter jurisdiction.
+            if (field.Code == "DDA" && fields[i - 1].Code == "DAI"
+                && body.Length >= field.Index + 8 && body[field.Index + 5] == 'J'
+                && Regex.IsMatch(body.Substring(field.Index + 6, 2), @"^[A-Z]{2}$", RegexOptions.CultureInvariant))
+                fields[i] = (field.Index + 1, "DAJ");
+        }
         if (fields.Count == 0 || fields[0].Index != 0) return null;
         // This compatibility profile has an account number first and a fixed-width
         // revision date last. A plausible date found midway through a transmission
         // is insufficient evidence that the whole card arrived.
-        if (fields[0].Value != "DAQ" || fields[^1].Value != "DDB" || body.Length - fields[^1].Index - 2 != 11) return null;
+        if (fields[0].Code != "DAQ" || fields[^1].Code != "DDB" || body.Length - fields[^1].Index - 2 != 11) return null;
         int length = int.Parse(header.Groups[3].Value, CultureInfo.InvariantCulture);
         int restoredLength = body.Length + fields.Count; // inter-field LF plus final CR
         if (length != restoredLength) return null;

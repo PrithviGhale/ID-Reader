@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Controls;
 using AgeCheck.Core;
 
 namespace AgeCheck;
@@ -55,7 +56,7 @@ public partial class MainWindow
         HistoryEmptyLabel.Visibility=history.Entries.Count==0?Visibility.Visible:Visibility.Collapsed;
         HistoryEmptyLabel.Text=history.Enabled?"No scans yet. Scan a card or try a clearly marked demo.":"Turn on session history in Settings to keep names and results until the app closes.";
     }
-    private void ClearHistory_Click(object sender,RoutedEventArgs e) { history.Clear(); UpdateHistoryUI(); }
+    private void ClearHistory_Click(object sender,RoutedEventArgs e) { history.Clear(); HistoryDetail.Visibility=Visibility.Collapsed; UpdateHistoryUI(); }
     private void HistoryEnabled_Click(object sender,RoutedEventArgs e)
     {
         history.SetEnabled(HistoryEnabled.IsChecked==true); UpdateHistoryUI(); SavePreferences();
@@ -67,6 +68,26 @@ public partial class MainWindow
     private void HistoryCopy_Click(object sender,RoutedEventArgs e)
     {
         if(sender is FrameworkElement{DataContext:ScanEntry entry} && entry.CanCopy) CopyName(entry.Name);
+    }
+    private void HistoryList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (HistoryDetail == null || HistoryList.SelectedItem is not ScanEntry entry) return;
+        CustomersList.SelectedItem = null;
+        HistoryDetail.Visibility = Visibility.Visible;
+        HistoryDetailName.Text = entry.Name;
+        HistoryDetailAge.Text = entry.AgeLabel + " at this scan";
+        HistoryDetailStatus.Text = entry.StatusLabel + (entry.VisitLabel is { } visit ? " · " + visit : "");
+        HistoryDetailTime.Text = "Scanned " + entry.ScannedAt.ToLocalTime().ToString("MMM d, yyyy 'at' h:mm tt");
+    }
+    private void CustomersList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (HistoryDetail == null || CustomersList.SelectedItem is not CustomerRecord entry) return;
+        HistoryList.SelectedItem = null;
+        HistoryDetail.Visibility = Visibility.Visible;
+        HistoryDetailName.Text = entry.Name;
+        HistoryDetailAge.Text = "Current age: scan the card again";
+        HistoryDetailStatus.Text = entry.VisitLabel;
+        HistoryDetailTime.Text = entry.LastSeenLabel;
     }
     private void CopyName(string name)
     {
