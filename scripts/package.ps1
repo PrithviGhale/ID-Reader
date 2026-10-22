@@ -2,6 +2,12 @@ param([Parameter(Mandatory=$true)][ValidatePattern('^\d+\.\d+\.\d+$')][string]$V
 $ErrorActionPreference = 'Stop'
 Set-Location (Join-Path $PSScriptRoot '..')
 $config = Get-Content release-config.json -Raw | ConvertFrom-Json
+$notes = Get-Content RELEASE_NOTES.md -Raw
+if ($notes -notmatch "(?m)^# AgeCheck $([regex]::Escape($Version))(?:\s|$)" -or
+    ([regex]::Matches($notes, '(?m)^# ')).Count -ne 1 -or
+    $notes -match '(?m)^## Previous release') {
+    throw "RELEASE_NOTES.md must describe only AgeCheck $Version. Older versions have their own GitHub release pages."
+}
 function Check-Exit { if ($LASTEXITCODE -ne 0) { throw "Build command failed ($LASTEXITCODE)." } }
 dotnet tool restore
 Check-Exit
