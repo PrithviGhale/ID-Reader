@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <PackageReference Include="Velopack" Version="1.2.161" />
+    <PackageReference Include="ZXing.Net.Bindings.Windows.Compatibility" Version="0.16.16" />
   </ItemGroup>
 
   <PropertyGroup>

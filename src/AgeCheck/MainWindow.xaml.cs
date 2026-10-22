@@ -48,7 +48,7 @@ public partial class MainWindow : Window
 
     public MainWindow(string[] args)
     {
-        bool developerMode = args.Any(a => a is "--self-test" or "--layout-test" or "--screenshot" or "--motion-test");
+        bool developerMode = args.Any(a => a is "--self-test" or "--image-test" or "--layout-test" or "--screenshot" or "--motion-test");
         settingsPath = developerMode ? Path.Combine(Environment.CurrentDirectory, "artifacts", "test-preferences.json")
             : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AgeCheck", "settings.json");
         customers = new CustomerStore(Path.Combine(Path.GetDirectoryName(settingsPath)!, "customers.dat"), memoryOnly: developerMode);
@@ -106,6 +106,7 @@ public partial class MainWindow : Window
             AdaptLayout(ActualWidth);
             if (args.Contains("--layout-test")) { suppressAnimations = true; await LayoutTest(); return; }
             if (args.Contains("--self-test")) { await SelfTest(); return; }
+            if (args.Contains("--image-test")) { await ImageSelfTest(); return; }
             if (args.Contains("--screenshot")) { suppressAnimations = true; await ExportScreenshots(); return; }
             if (args.Contains("--motion-test")) { await MotionTest(); return; }
             Animate(PageHost, true); Animate(BrandMark, true);
@@ -169,10 +170,12 @@ public partial class MainWindow : Window
     }
     private void Clear()
     {
+        imageGeneration++;
         scanGeneration++; scan.Clear(); quiet.Stop(); deadline.Stop(); privacy.Stop(); inputBlocked = false; showingResult = false;
         recoveredDates = null; recoveryDemo = false; RecoveryNotice.Visibility = Visibility.Collapsed;
         ResetCustomerDetails();
         visibleResult = null;
+        ImageResultPanel.Visibility = Visibility.Collapsed;
         currentScanId = Guid.Empty;
         Phase.Text = "READY TO SCAN"; Headline.Text = "Ready to scan"; Symbol.Text = "⌁";
         ResultSubtitle.Text = "The next card starts a fresh check.";
@@ -248,7 +251,7 @@ public partial class MainWindow : Window
     {
         if (page == UpdatesPage) page = SettingsPage;
         CloseDrawer();
-        Clear(); ScanPage.Visibility = SetupPage.Visibility = SettingsPage.Visibility = HistoryPage.Visibility = Visibility.Collapsed;
+        Clear(); ScanPage.Visibility = ImagePage.Visibility = SetupPage.Visibility = SettingsPage.Visibility = HistoryPage.Visibility = Visibility.Collapsed;
         activePage = page;
         page.Visibility = Visibility.Visible; Animate(page);
         if (page == HistoryPage) RefreshCustomers();
@@ -256,6 +259,7 @@ public partial class MainWindow : Window
         PageScroll.ScrollToTop();
     }
     private void ScanPage_Click(object sender, RoutedEventArgs e) => Page(ScanPage);
+    private void ImagePage_Click(object sender, RoutedEventArgs e) => Page(ImagePage);
     private void SetupPage_Click(object sender, RoutedEventArgs e) => Page(SetupPage);
     private void UpdatesPage_Click(object sender, RoutedEventArgs e) => Page(UpdatesPage);
     private void SettingsPage_Click(object sender, RoutedEventArgs e) => Page(SettingsPage);
@@ -326,12 +330,12 @@ public partial class MainWindow : Window
     }
     private void PaintNavigation()
     {
-        foreach (var (button,page) in new[] { (ScanNav, ScanPage), (HistoryNav, HistoryPage), (SetupNav, SetupPage), (SettingsDrawerNav, SettingsPage), (SettingsNav, SettingsPage) })
+        foreach (var (button,page) in new[] { (ScanNav, ScanPage), (ImageNav, ImagePage), (HistoryNav, HistoryPage), (SetupNav, SetupPage), (SettingsDrawerNav, SettingsPage), (SettingsNav, SettingsPage) })
         {
             button.SetResourceReference(BackgroundProperty, page == activePage ? "AccentSoft" : "Surface");
             button.SetResourceReference(ForegroundProperty, page == activePage ? "AccentText" : "Muted");
         }
-        LocalBadge.Text = "/  " + (activePage == HistoryPage ? "HISTORY" : activePage == SetupPage ? "SETUP" : activePage == UpdatesPage ? "UPDATES" : activePage == SettingsPage ? "SETTINGS" : "SCAN");
+        LocalBadge.Text = "/  " + (activePage == ImagePage ? "IMAGE" : activePage == HistoryPage ? "HISTORY" : activePage == SetupPage ? "SETUP" : activePage == UpdatesPage ? "UPDATES" : activePage == SettingsPage ? "SETTINGS" : "SCAN");
         HomeButton.Visibility = activePage == ScanPage ? Visibility.Collapsed : Visibility.Visible;
     }
     private void PaintStatus(Outcome? outcome)
@@ -348,7 +352,7 @@ public partial class MainWindow : Window
     private void MotionEnabled_Click(object sender, RoutedEventArgs e)
     {
         motionEnabled = MotionEnabled.IsChecked == true;
-        if (!motionEnabled) { Animate(PageHost); Animate(BrandMark); Animate(ResultCard); foreach (var page in new[] { ScanPage, SetupPage, UpdatesPage, SettingsPage, HistoryPage }) Animate(page); PaintEdge(visibleResult?.Outcome); }
+        if (!motionEnabled) { Animate(PageHost); Animate(BrandMark); Animate(ResultCard); foreach (var page in new[] { ScanPage, ImagePage, SetupPage, UpdatesPage, SettingsPage, HistoryPage }) Animate(page); PaintEdge(visibleResult?.Outcome); }
         SavePreferences();
     }
     private void UpdateButtons()
@@ -399,7 +403,7 @@ public partial class MainWindow : Window
         // Explicit developer-only export: synthetic demonstrations, never real scan data.
         Directory.CreateDirectory("artifacts/screenshots");
         ((System.Windows.Controls.Panel)Content).Background = Background;
-        foreach (string state in new[] { "ready", "passed", "under21", "expired", "review", "setup", "updates" })
+        foreach (string state in new[] { "ready", "passed", "under21", "expired", "review", "image", "setup", "updates" })
         {
             Page(ScanPage);
             switch (state)
@@ -408,6 +412,7 @@ public partial class MainWindow : Window
                 case "under21": DemoResult(19); break;
                 case "expired": DemoResult(30, true); break;
                 case "review": ShowResult(new(Outcome.Review, "Incomplete barcode. Check scanner settings and rescan."), true); break;
+                case "image": Page(ImagePage); break;
                 case "setup": Page(SetupPage); break;
                 case "updates": Page(UpdatesPage); break;
             }
@@ -448,7 +453,7 @@ public partial class MainWindow : Window
                 source.CompositionTarget.RenderMode = RenderMode.SoftwareOnly;
                 RootLayout.Width = width; RootLayout.Height = height;
                 source.RootVisual = RootLayout;
-                foreach (var state in new[] { "ready", "passed", "under21", "expired", "review", "recovery", "history", "returning", "customers", "setup", "updates", "settings", "updatealert", "menu" })
+                foreach (var state in new[] { "ready", "passed", "under21", "expired", "review", "recovery", "image", "history", "returning", "customers", "setup", "updates", "settings", "updatealert", "menu" })
                 {
                     Page(ScanPage); AdaptLayout(width);
                     SetUpdateAlert(false);
@@ -459,6 +464,7 @@ public partial class MainWindow : Window
                         case "expired": DemoResult(30, true); break;
                         case "review": ShowResult(new(Outcome.Review, "The scanner data is incomplete. Check the scanner settings and scan again."), true); break;
                         case "recovery": RecoveryDemo_Click(this, new RoutedEventArgs()); break;
+                        case "image": Page(ImagePage); break;
                         case "setup": Page(SetupPage); break;
                         case "updates": Page(UpdatesPage); break;
                         case "settings": Page(SettingsPage); break;

@@ -1,5 +1,6 @@
-# AgeCheck 1.2.5 - More reliable two-section scans
+﻿# AgeCheck 1.3.0 - Image Scanner
 
-- A complete two-subfile keyboard scan can now recover a first-name field ending in D without mistaking its last letter for an extra field. The encoded directory length and strict field/date checks must still agree.
-- Scans that preserve labeled field separators but omit a header control character can be checked directly after reconstructing that fixed header, provided the entire barcode passes the strict parser.
-- Added synthetic tests for both scanner transports and incomplete input. Manual review remains required for damaged or ambiguous data; the barcode does not prove the physical ID is genuine.
+- Added an Image Scanner tab. Paste a photo of the PDF417 barcode on the back of an ID or open a JPG, PNG or BMP file. The image is decoded on this PC and the existing barcode checks show age, 21+ status and expiration.
+- Clear guidance helps when a photo is blurry, cropped or affected by glare. Photos are processed in memory; AgeCheck does not upload or save them.
+- Added local tests for synthetic 21+, under-21 and expired barcode images, rotated images, and blank photos. The Image Scanner page is included in layout checks.
+- Barcode data cannot establish whether a physical ID is genuine. Compare the printed card, photograph and person.

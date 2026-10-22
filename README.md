@@ -31,6 +31,7 @@ One thing I found interesting while building it: a scanner can send the informat
 | Feature | How it helps |
 | --- | --- |
 | **21+ age check** | Checks whether the barcode birth date says the person is at least 21. |
+| **Image Scanner** | Paste a photo of the back-of-ID PDF417 barcode or open a JPG, PNG or BMP. Decoding and age checks run locally, with no paid service or upload. |
 | **Current age and birthdays** | Shows age, a birthday-today message or days until the next birthday, and days until 21 for younger customers. |
 | **Returning customers** | Recognizes a previously scanned card using a keyed fingerprint and shows a welcome-back message. |
 | **Expiration check** | Shows when the ID's barcode expiration date has passed. |
@@ -52,6 +53,10 @@ One thing I found interesting while building it: a scanner can send the informat
 | **Demo mode** | Try made-up examples without scanning an ID. Each demo is clearly marked. |
 
 ## Get started
+
+To check a photo, open **☰ → Image Scanner**, copy a clear photo of the entire barcode and choose **Paste photo**. **Open image file** also accepts JPG, PNG and BMP. This uses the same date and field checks as a scanner result. A blurry, cropped or glare-covered image may not decode; the app gives photo tips and asks for another image or manual review. Photos are processed in memory and are not saved by AgeCheck. The free [ZXing.Net](https://github.com/micjahn/ZXing.Net) PDF417 decoder runs on your PC; no cloud AI account is required. A readable barcode still cannot prove the physical ID is authentic.
+
+![AgeCheck Image Scanner tab with paste and open-photo buttons](docs/images/image.png)
 
 1. **[Open the latest release](https://github.com/PrithviGhale/ID-Reader/releases/latest)** and download **`AgeCheck-win-x64-Setup.exe`**.
 2. Run the installer. Everything the app needs is included.
