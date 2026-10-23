@@ -80,11 +80,15 @@ public class NamesAndHistoryTests
         Assert.Equal(raw, h.Entries[0].RawBarcode);
         h.SetEnabled(false); Assert.Empty(h.Entries);
     }
-    [Fact] public void PassingAndDemoScansNeverRetainRawText()
+    [Fact] public void PassingScanRetainsTextOnlyInSessionAndDemoDoesNot()
     {
         var h = new SessionHistory();
         h.Record(Guid.NewGuid(), new(Outcome.Passed, ""), false, false, DateTimeOffset.UtcNow, rawBarcode: "SYNTHETIC-PASS");
         h.Record(Guid.NewGuid(), new(Outcome.Review, ""), true, false, DateTimeOffset.UtcNow, rawBarcode: "SYNTHETIC-DEMO");
-        Assert.All(h.Entries, entry => Assert.False(entry.CanCopyBarcode));
+        Assert.False(h.Entries[0].CanCopyBarcode);
+        Assert.True(h.Entries[1].CanCopyBarcode);
+        Assert.Equal("SYNTHETIC-PASS",h.Entries[1].RawBarcode);
+        Assert.DoesNotContain("SYNTHETIC-PASS",System.Text.Json.JsonSerializer.Serialize(h.Entries[1]));
+        h.Clear(); Assert.Empty(h.Entries);
     }
 }

@@ -3,7 +3,8 @@ using System.Text.Json.Serialization;
 
 namespace AgeCheck.Core;
 public sealed record ScanEntry(Guid ScanId, string Name, DateTimeOffset ScannedAt, Outcome Outcome, bool Demo, bool Confirmed, int? Age = null, string? VisitLabel = null,
-    [property: JsonIgnore] string? RawBarcode = null)
+    [property: JsonIgnore] string? RawBarcode = null, [property: JsonIgnore] DateOnly? Birth = null,
+    [property: JsonIgnore] DateOnly? Expiration = null, [property: JsonIgnore] string? Detail = null)
 {
     public string TimeLabel => ScannedAt.ToLocalTime().ToString("h:mm:ss tt");
     public string StatusLabel => (Demo ? "DEMO · " : "") + (Confirmed ? "Dates confirmed · " : "") + (Outcome switch { Outcome.Passed => "21+", Outcome.Under21 => "Under 21", Outcome.Expired => "Expired", _ => "Manual review" });
@@ -11,7 +12,7 @@ public sealed record ScanEntry(Guid ScanId, string Name, DateTimeOffset ScannedA
     public string AgeLabel => Age is { } age ? $"Age {age}" : "Age unavailable";
     public bool CanCopyBarcode => RawBarcode is { Length: > 0 };
 }
-// Session-only. Raw failed scans are bounded and never written to disk.
+// Session-only. Raw scans are bounded and never written to disk.
 public sealed class SessionHistory
 {
     public const int Capacity = 100;
@@ -24,8 +25,8 @@ public sealed class SessionHistory
     {
         if (!Enabled) return;
         int? age = result.Outcome != Outcome.Review && result.Birth is { } birth ? AgeDetails.From(birth, today ?? DateOnly.FromDateTime(time.LocalDateTime))?.Age : null;
-        string? raw = !demo && result.Outcome == Outcome.Review && rawBarcode is { Length: > 0 and <= Barcode.InputLimit } ? rawBarcode : null;
-        var entry=new ScanEntry(id,result.DisplayName ?? "NAME NOT AVAILABLE",time,result.Outcome,demo,confirmed,age,visitLabel,raw);
+        string? raw = !demo && rawBarcode is { Length: > 0 and <= Barcode.InputLimit } ? rawBarcode : null;
+        var entry=new ScanEntry(id,result.DisplayName ?? "NAME NOT AVAILABLE",time,result.Outcome,demo,confirmed,age,visitLabel,raw,result.Birth,result.Expiration,result.Detail);
         int index=-1;
         for(int i=0;i<entries.Count;i++) if(entries[i].ScanId==id) { index=i; break; }
         if(index>=0) { entries[index]=entry with { ScannedAt=entries[index].ScannedAt, RawBarcode=raw ?? entries[index].RawBarcode }; return; }

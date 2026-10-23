@@ -39,8 +39,9 @@ One thing I found interesting while building it: a scanner can send the informat
 | **Date comparison** | Shows the birth date and expiration date so you can compare them with the card. |
 | **Scanner text recovery** | Complete supported keyboard frames show an age result directly; incomplete recoveries ask you to confirm the printed dates. |
 | **Uppercase names** | Shows a readable first and last name in ALL CAPS, with a copy button for your rewards form. |
-| **Session history** | Keeps up to 100 names, ages, times and results in memory. Clear it anytime or turn it off. |
-| **Local processing** | Scans stay on this PC. Failed scanner text can be kept in memory in session History for copying; it clears when the app closes. No full barcode, card number, photo, address or date of birth is saved to the customer file. Optional customer records are encrypted for your Windows account. |
+| **Session history** | Select a scan to see its name, age at scan time, birth date, expiration date and result. Up to 100 scans stay in memory until cleared or the app closes. |
+| **Copy barcode text** | Copy the current scan from the Scan page, or copy successful and failed scans from session History. Clipboard text may contain personal information. |
+| **Local processing** | Scans stay on this PC. Session barcode text clears when history is cleared or the app closes. No full barcode, card number, photo, address or date of birth is saved to the customer file. Optional customer records are encrypted for your Windows account. |
 | **Automatic clearing** | Clears results after 30 seconds, on the next scan, or when you leave the window. |
 | **Works offline** | No internet is needed to check a scan. |
 | **Built-in updates** | Check for updates, read what's new, download, and restart when you choose. |
@@ -76,7 +77,7 @@ If the barcode is small within a larger photo, AgeCheck also searches overlappin
 
 AgeCheck supports selected US and Canadian AAMVA barcode formats, versions 08–10. Unsupported, incomplete, or conflicting data asks for manual review. It does not support every ID format.
 
-Version **1.2.3** adds **Copy scanner text** to manual-review entries in session History. Failed scan text stays in memory for up to 100 session entries and disappears when history is cleared, turned off or the app closes. It is not stored in remembered customers. Copying places personal barcode data on the Windows clipboard; paste it only where intended.
+Version **1.4.0** lets you open a session scan for its checked details and copy barcode text from the current result or any session scan. Session barcode text disappears when history is cleared, turned off or the app closes. It is not stored in remembered customers. Copying places personal barcode data on the Windows clipboard; paste it only where intended.
 
 Version **1.2.2** adds a checked recovery path for complete two-subfile keyboard scans with a jurisdiction section, including a synthetic version 08 layout. It also prevents the title-bar minimize and maximize buttons from retaining scanner keyboard focus.
 
@@ -137,7 +138,7 @@ Names come from supported first/last-name fields; middle names are excluded. Sho
 
 Open **☰ → History** to see names, scan times and results from this app session. Recovered-date confirmation updates the same entry. Demo entries are marked DEMO. History is capped at 100 entries, has a Clear history button, and can be switched off in Settings; switching it off also clears it.
 
-Current scan results still clear after 30 seconds, on the next scan and when the app loses focus. History names remain in memory until cleared or the app closes. Session history has no file persistence. The separate remembered-customer store described below survives restarts when enabled. A copied name can remain on the Windows clipboard after the app closes and follows your Windows clipboard settings.
+Current scan results still clear after 30 seconds, on the next scan and when the app loses focus. Session History details and barcode text remain in memory until cleared or the app closes. Session history has no file persistence. The separate remembered-customer store described below survives restarts when enabled. Copied text can remain on the Windows clipboard after the app closes and follows your Windows clipboard settings.
 
 <details>
 <summary>See the new scan result, history and menu</summary>

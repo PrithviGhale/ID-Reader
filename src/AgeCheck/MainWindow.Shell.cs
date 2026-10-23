@@ -77,11 +77,19 @@ public partial class MainWindow
     {
         if (HistoryList.SelectedItem is ScanEntry entry) CopyScannerText(entry);
     }
+    private void CopyBarcode_Click(object sender, RoutedEventArgs e)
+    {
+        if (currentRawBarcode is not { Length: > 0 } raw) return;
+        try { writeClipboard(ShareableBarcode(raw)); CopyBarcodeStatus.Text = "Barcode text copied. It contains personal information; paste only where intended."; }
+        catch (Exception ex) when (ex is System.Runtime.InteropServices.ExternalException or InvalidOperationException)
+        { CopyBarcodeStatus.Text = "Clipboard is busy. Try copying again."; }
+    }
+    private static string ShareableBarcode(string raw) => raw.Replace("\u001e", "[RS]").Replace("\u001d", "[GS]").Replace("\u0003", "[ETX]")
+        .Replace("\r", "[CR]").Replace("\n", "[LF]");
     private void CopyScannerText(ScanEntry entry)
     {
         if (entry.RawBarcode is not { Length: > 0 } raw || !history.Entries.Contains(entry)) return;
-        string shareable = raw.Replace("\u001e", "[RS]").Replace("\u001d", "[GS]").Replace("\u0003", "[ETX]")
-            .Replace("\r", "[CR]").Replace("\n", "[LF]");
+        string shareable = ShareableBarcode(raw);
         try { writeClipboard(shareable); BarcodeCopyStatus.Text = HistoryCopyStatus.Text = "Scanner text copied. It contains personal information; paste only where intended."; }
         catch (Exception ex) when (ex is System.Runtime.InteropServices.ExternalException or InvalidOperationException)
         { BarcodeCopyStatus.Text = HistoryCopyStatus.Text = "Clipboard is busy. Try copying again."; }
@@ -91,23 +99,33 @@ public partial class MainWindow
         if (HistoryDetail == null || HistoryList.SelectedItem is not ScanEntry entry) return;
         CustomersList.SelectedItem = null;
         HistoryDetail.Visibility = Visibility.Visible;
+        HistoryDetailHeading.Text = "SCAN DETAILS";
         HistoryDetailName.Text = entry.Name;
         HistoryDetailAge.Text = entry.AgeLabel + " at this scan";
         HistoryDetailStatus.Text = entry.StatusLabel + (entry.VisitLabel is { } visit ? " · " + visit : "");
         HistoryDetailTime.Text = "Scanned " + entry.ScannedAt.ToLocalTime().ToString("MMM d, yyyy 'at' h:mm tt");
+        HistoryDetailBirth.Text = entry.Birth?.ToString("MMM dd, yyyy", System.Globalization.CultureInfo.InvariantCulture) ?? "Unavailable";
+        HistoryDetailExpiry.Text = entry.Expiration?.ToString("MMM dd, yyyy", System.Globalization.CultureInfo.InvariantCulture) ?? "Unavailable";
+        HistoryDetailReason.Text = entry.Detail ?? "";
+        HistoryDetailDates.Visibility = Visibility.Visible;
         HistoryDetailCopyBarcode.Visibility = BarcodeCopyStatus.Visibility = entry.CanCopyBarcode ? Visibility.Visible : Visibility.Collapsed;
         BarcodeCopyStatus.Text = "Scanner text contains personal information. Paste it only where intended.";
+        HistoryDetail.BringIntoView();
     }
     private void CustomersList_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (HistoryDetail == null || CustomersList.SelectedItem is not CustomerRecord entry) return;
         HistoryList.SelectedItem = null;
         HistoryDetail.Visibility = Visibility.Visible;
+        HistoryDetailHeading.Text = "SAVED CUSTOMER";
         HistoryDetailName.Text = entry.Name;
         HistoryDetailAge.Text = "Current age: scan the card again";
         HistoryDetailStatus.Text = entry.VisitLabel;
         HistoryDetailTime.Text = entry.LastSeenLabel;
+        HistoryDetailDates.Visibility = Visibility.Collapsed;
+        HistoryDetailReason.Text = "Saved visits do not contain birth or expiration dates. Scan the card again to check today's age and expiration.";
         HistoryDetailCopyBarcode.Visibility = BarcodeCopyStatus.Visibility = Visibility.Collapsed;
+        HistoryDetail.BringIntoView();
     }
     private void CopyName(string name)
     {

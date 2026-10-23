@@ -36,6 +36,7 @@ public partial class MainWindow : Window
     private bool darkTheme = true;
     private bool motionEnabled = true;
     private CheckResult? visibleResult;
+    private string? currentRawBarcode;
     private UIElement? activePage;
     private static bool suppressAnimations;
     private readonly string settingsPath;
@@ -93,7 +94,7 @@ public partial class MainWindow : Window
         activePage = ScanPage; ApplyAppearance(darkTheme, false);
         SourceInitialized += (_, _) => Theme.TitleBar(this, darkTheme);
         quiet.Tick += async (_, _) => await FinishScan();
-        deadline.Tick += (_, _) => { Clear(); inputBlocked = true; ShowResult(new(Outcome.Review, "Scan exceeded 20 seconds. Clear and rescan."), false); };
+        deadline.Tick += (_, _) => { string partial = scan.Snapshot(); Clear(); inputBlocked = true; ShowResult(new(Outcome.Review, "Scan exceeded 20 seconds. Clear and rescan."), false, partial); };
         privacy.Tick += (_, _) => Clear();
         Deactivated += (_, _) => Clear();
         Closed += (_, _) => { quiet.Stop(); deadline.Stop(); privacy.Stop(); scan.Clear(); history.Clear(); };
@@ -175,6 +176,9 @@ public partial class MainWindow : Window
         recoveredDates = null; recoveryDemo = false; RecoveryNotice.Visibility = Visibility.Collapsed;
         ResetCustomerDetails();
         visibleResult = null;
+        currentRawBarcode = null;
+        CopyBarcodeButton.IsEnabled = false;
+        CopyBarcodeStatus.Text = "";
         ImageResultPanel.Visibility = Visibility.Collapsed;
         currentScanId = Guid.Empty;
         Phase.Text = "READY TO SCAN"; Headline.Text = "Ready to scan"; Symbol.Text = "⌁";
@@ -189,6 +193,8 @@ public partial class MainWindow : Window
     }
     private void ShowResult(CheckResult result, bool demo, string? rawBarcode = null)
     {
+        if (!demo && rawBarcode is { Length: > 0 and <= Barcode.InputLimit }) currentRawBarcode = rawBarcode;
+        CopyBarcodeButton.IsEnabled = currentRawBarcode != null;
         visibleResult = result;
         if (currentScanId == Guid.Empty) StartCustomer();
         showingResult = true; Phase.Text = "CHECK COMPLETE"; DemoBadge.Visibility = demo ? Visibility.Visible : Visibility.Collapsed;

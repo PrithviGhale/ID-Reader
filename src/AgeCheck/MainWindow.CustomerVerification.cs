@@ -20,6 +20,10 @@ public partial class MainWindow
         string sample=Demo.CompleteKeyboard(Today.AddYears(-21),Today.AddYears(2),Today.AddYears(-1));
         Receive(sample); await WaitForScanResult();
         Check(AgeLabel.Text == "21" && BirthdayLabel.Text.Contains("birthday today"), "Current age and birthday-today message appear beside the result");
+        string? homeBarcode = null; var clipboardBefore = writeClipboard; writeClipboard = value => homeBarcode = value;
+        try { CopyBarcode_Click(this, new RoutedEventArgs()); }
+        finally { writeClipboard = clipboardBefore; }
+        Check(CopyBarcodeButton.IsEnabled && homeBarcode == sample, "Successful scan barcode can be copied from Scan page");
         Check(customers.Records.Count == 1 && customers.Records[0].Visits == 1 && WelcomePanel.Visibility == Visibility.Collapsed, "First complete named scan creates one customer record");
         ShowResult(visibleResult!,false);
         Check(customers.Records[0].Visits == 1, "Repainting the same scan never adds a visit");
@@ -39,6 +43,7 @@ public partial class MainWindow
         Check(customers.Records.Count == count, "Canceling deletion preserves saved customers");
         Page(HistoryPage); HistoryList.SelectedIndex = 0;
         Check(HistoryDetail.Visibility == Visibility.Visible && HistoryDetailName.Text == "ALEX SAMPLE" && HistoryDetailAge.Text.Contains("Age 21"), "Selecting a session scan opens its name and age details");
+        Check(HistoryDetailBirth.Text != "Unavailable" && HistoryDetailExpiry.Text != "Unavailable", "Session detail shows birth and expiration dates");
         CustomersList.SelectedIndex = 0;
         Check(HistoryDetailName.Text == "ALEX SAMPLE" && HistoryDetailAge.Text.Contains("scan the card again"), "Selecting a saved customer opens a privacy-safe detail card");
         const string failedSample = "SYNTHETIC\nFAILED-SCANNER-TEXT";

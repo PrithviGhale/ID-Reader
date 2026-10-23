@@ -1,5 +1,6 @@
-# AgeCheck 1.3.1 - Better image scanning
+# AgeCheck 1.4.0 - More useful scan history
 
-- Image Scanner now tries overlapping regions of a photo after the full-image read fails. This improves detection when a sideways PDF417 barcode occupies only a small part of the picture.
-- A failed read now explains that a small or blurry barcode needs a closer, sharper photo. It never guesses an age from an unreadable image.
-- Added a synthetic full-photo test with a distant sideways barcode. Photos with insufficient barcode detail may still be unreadable; retake them closer with the barcode in focus or use the physical scanner.
+- Select a session scan to see its name, age at scan time, birth date, expiration date, result and review details. Saved customers still require a fresh scan for current age and expiration.
+- Copy barcode text from the current Scan-page result or from successful and failed session scans. This includes image-decoded barcode text. Demo entries have no copyable barcode.
+- Refreshed History headings, detail cards and selected-row styling.
+- Session barcode text and dates stay in memory only, up to 100 scans, and clear when History is cleared, disabled or AgeCheck closes. The encrypted remembered-customer file still does not contain these details. Copied text can remain on the Windows clipboard.
