@@ -22,6 +22,27 @@ public class BarcodeTests
     public void CountryDates(string country) { var r = Barcode.Check(Valid(country), Today); Assert.Equal(Outcome.Passed,r.Outcome); Assert.Equal(new DateOnly(2000,3,12),r.Birth); }
     [Fact] public void MissingCountryNeverGuesses() => Assert.Equal(Outcome.Review, Barcode.Check(Frame("DLDBB03122000\nDBA10192028\nDBD10192024\r"),Today).Outcome);
     [Theory]
+    [InlineData("636039", "New Hampshire")]
+    [InlineData("636014", "California")]
+    [InlineData("636002", "Massachusetts")]
+    [InlineData("999999", null)]
+    public void IssuingStateComesFromIinNotAddress(string iin, string? expected)
+    {
+        var barcode = Frame("DLDCGUSA\nDBB03122000\nDBA10192028\nDBD10192024\nDAJNH\r");
+        Assert.Contains("DAJNH", barcode);
+        Assert.Equal(expected, Barcode.Check(barcode[..9] + iin + barcode[15..], Today).IssuingState);
+    }
+    [Theory]
+    [InlineData(10, "10 days until expiration")]
+    [InlineData(1, "1 day until expiration")]
+    [InlineData(0, "Expires today")]
+    [InlineData(-1, "Expired 1 day ago")]
+    [InlineData(-3, "Expired 3 days ago")]
+    public void ExpirationCountdownUsesCalendarDays(int days, string expected) =>
+        Assert.Equal(expected, ExpirationCountdown.Describe(Today.AddDays(days), Today, true));
+    [Fact] public void UncheckedExpirationHasNoCountdown() =>
+        Assert.Equal("Compare the expiration date with the card", ExpirationCountdown.Describe(Today.AddDays(5), Today, false));
+    [Theory]
     [InlineData("DBB02302000\nDBA10192028\nDBD10192024")]
     [InlineData("DBB03122000\nDBA10192028")]
     [InlineData("DBA10192028\nDBD10192024")]
@@ -40,9 +61,9 @@ public class BarcodeTests
         var text = Valid();
         for (int i=0;i<text.Length;i++) Assert.Equal(Outcome.Review,Barcode.Check(text[..i],Today).Outcome);
     }
-    [Theory] [InlineData("08")] [InlineData("09")] [InlineData("10")]
+    [Theory] [InlineData("08")] [InlineData("09")] [InlineData("10")] [InlineData("11")]
     public void SupportedVersions(string version) { var t=Valid(); Assert.Equal(Outcome.Passed,Barcode.Check(t[..15]+version+t[17..],Today).Outcome); }
-    [Fact] public void UnsupportedVersion() { var t=Valid(); Assert.Equal(Outcome.Review,Barcode.Check(t[..15]+"11"+t[17..],Today).Outcome); }
+    [Fact] public void UnsupportedVersion() { var t=Valid(); Assert.Equal(Outcome.Review,Barcode.Check(t[..15]+"12"+t[17..],Today).Outcome); }
     [Theory] [InlineData("\r")] [InlineData("\t")] [InlineData("\r\n")] [InlineData("\u0003")]
     public void Suffixes(string suffix) => Assert.Equal(Outcome.Passed,Barcode.Check(Valid()+suffix,Today).Outcome);
     [Fact] public void ControlSubstitutions() => Assert.Equal(Outcome.Passed,Barcode.Check(Valid().Replace("\r","[CR]").Replace("\n","[LF]").Replace("\u001e","[RS]"),Today).Outcome);

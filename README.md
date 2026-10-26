@@ -35,6 +35,7 @@ One thing I found interesting while building it: a scanner can send the informat
 | **Current age and birthdays** | Shows age, a birthday-today message or days until the next birthday, and days until 21 for younger customers. |
 | **Returning customers** | Recognizes a previously scanned card using a keyed fingerprint and shows a welcome-back message. |
 | **Expiration check** | Shows when the ID's barcode expiration date has passed. |
+| **Issuing state and countdown** | Shows the jurisdiction named by the barcode's issuer code and calendar days until expiration, or days since it expired. The address-state field is not used as the issuing state. |
 | **Clear results** | Large text shows 21+, Under 21, Expired, or Manual review. |
 | **Date comparison** | Shows the birth date and expiration date so you can compare them with the card. |
 | **Scanner text recovery** | Complete supported keyboard frames show an age result directly; incomplete recoveries ask you to confirm the printed dates. |
@@ -59,6 +60,8 @@ To check a photo, open **☰ → Image Scanner**, copy a clear photo of the enti
 
 If the barcode is small within a larger photo, AgeCheck also searches overlapping parts of the picture. For best results, take the photo closer and tap the barcode to focus. Enlarging an already blurry photo cannot restore missing detail.
 
+Image Scanner also tries a high-contrast pass on small regions. Some photos still cannot be decoded when the individual barcode bars are blurred or compressed; in that case use a sharper photo or the physical PDF417 scanner. AgeCheck never guesses age or expiration from an unreadable image.
+
 ![AgeCheck Image Scanner tab with paste and open-photo buttons](docs/images/image.png)
 
 1. **[Open the latest release](https://github.com/PrithviGhale/ID-Reader/releases/latest)** and download **`AgeCheck-win-x64-Setup.exe`**.
@@ -75,7 +78,7 @@ If the barcode is small within a larger photo, AgeCheck also searches overlappin
 - A scanner that can read PDF417 barcodes and type them into Windows.
 - The setup guide is written for the **Honeywell Xenon XP 1950g**. Physical testing with that scanner is still needed.
 
-AgeCheck supports selected US and Canadian AAMVA barcode formats, versions 08–10. Unsupported, incomplete, or conflicting data asks for manual review. It does not support every ID format.
+AgeCheck supports selected US and Canadian AAMVA barcode formats, versions 08–11. Unsupported, incomplete, or conflicting data asks for manual review. It does not support every ID format. The issuing-jurisdiction label comes from the [AAMVA issuer code list](https://www.aamva.org/identity/issuer-identification-numbers-(iin)), not the cardholder's address field, and does not authenticate the card.
 
 Version **1.4.0** lets you open a session scan for its checked details and copy barcode text from the current result or any session scan. Session barcode text disappears when history is cleared, turned off or the app closes. It is not stored in remembered customers. Copying places personal barcode data on the Windows clipboard; paste it only where intended.
 

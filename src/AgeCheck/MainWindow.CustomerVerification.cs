@@ -20,6 +20,7 @@ public partial class MainWindow
         string sample=Demo.CompleteKeyboard(Today.AddYears(-21),Today.AddYears(2),Today.AddYears(-1));
         Receive(sample); await WaitForScanResult();
         Check(AgeLabel.Text == "21" && BirthdayLabel.Text.Contains("birthday today"), "Current age and birthday-today message appear beside the result");
+        Check(IssuingStateLabel.Text == "New Hampshire" && ExpiryCountdownLabel.Text.Contains("days until expiration"), "Scan result shows issuer state and expiration countdown");
         string? homeBarcode = null; var clipboardBefore = writeClipboard; writeClipboard = value => homeBarcode = value;
         try { CopyBarcode_Click(this, new RoutedEventArgs()); }
         finally { writeClipboard = clipboardBefore; }
@@ -44,6 +45,7 @@ public partial class MainWindow
         Page(HistoryPage); HistoryList.SelectedIndex = 0;
         Check(HistoryDetail.Visibility == Visibility.Visible && HistoryDetailName.Text == "ALEX SAMPLE" && HistoryDetailAge.Text.Contains("Age 21"), "Selecting a session scan opens its name and age details");
         Check(HistoryDetailBirth.Text != "Unavailable" && HistoryDetailExpiry.Text != "Unavailable", "Session detail shows birth and expiration dates");
+        Check(HistoryDetailIssuer.Text.Contains("New Hampshire") && HistoryDetailExpiryCountdown.Text.Contains("days until expiration"), "Session detail shows issuer and days until expiration at scan time");
         CustomersList.SelectedIndex = 0;
         Check(HistoryDetailName.Text == "ALEX SAMPLE" && HistoryDetailAge.Text.Contains("scan the card again"), "Selecting a saved customer opens a privacy-safe detail card");
         const string failedSample = "SYNTHETIC\nFAILED-SCANNER-TEXT";

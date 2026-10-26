@@ -78,7 +78,7 @@ public partial class MainWindow
             ShowResult(result, false, decoded);
             ImageResultHeadline.Text = Headline.Text;
             ImageResultName.Text = result.DisplayName ?? "Name unavailable";
-            ImageResultDetails.Text = $"Age: {(result.Outcome == Outcome.Review ? "review needed" : AgeLabel.Text)}  |  Birth date: {BirthLabel.Text}  |  Expires: {ExpiryLabel.Text}\n{result.Detail}";
+            ImageResultDetails.Text = $"Age: {(result.Outcome == Outcome.Review ? "review needed" : AgeLabel.Text)}  |  Birth date: {BirthLabel.Text}\nExpires: {ExpiryLabel.Text}  |  {ExpiryCountdownLabel.Text}\nIssued by: {IssuingStateLabel.Text}\n{result.Detail}";
             ImageResultPanel.Visibility = Visibility.Visible;
             Animate(ImageResultPanel);
             ImageStatus.Text = result.Outcome == Outcome.Review ? "Barcode decoded; the ID data needs manual review." : "Barcode decoded and checked locally. Compare it with the physical ID.";

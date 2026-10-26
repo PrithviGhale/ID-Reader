@@ -1,6 +1,6 @@
-# AgeCheck 1.4.0 - More useful scan history
+# AgeCheck 1.5.0 - Issuing state and expiration countdown
 
-- Select a session scan to see its name, age at scan time, birth date, expiration date, result and review details. Saved customers still require a fresh scan for current age and expiration.
-- Copy barcode text from the current Scan-page result or from successful and failed session scans. This includes image-decoded barcode text. Demo entries have no copyable barcode.
-- Refreshed History headings, detail cards and selected-row styling.
-- Session barcode text and dates stay in memory only, up to 100 scans, and clear when History is cleared, disabled or AgeCheck closes. The encrypted remembered-customer file still does not contain these details. Copied text can remain on the Windows clipboard.
+- Results now show the issuing jurisdiction from the AAMVA issuer code in the barcode header, plus calendar days until expiration or days since expiry. Session History and Image Scanner results show the same details. The address-state field is not treated as the issuing state.
+- Added strict support for AAMVA barcode version 11 alongside versions 08-10. Unknown or incomplete formats still require manual review.
+- Image Scanner now tries a high-contrast pass on small photo regions after ordinary PDF417 detection fails. It does not guess from an unreadable barcode; photos with insufficient detail still need a sharper capture or physical scan.
+- Added tests for issuer-code mapping, expiration boundaries and version 11, and rechecked the offline image decoder. Barcode data does not prove the physical ID is genuine.

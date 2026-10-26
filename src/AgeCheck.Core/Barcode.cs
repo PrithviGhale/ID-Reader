@@ -7,7 +7,7 @@ namespace AgeCheck.Core;
 public enum Outcome { Passed, Under21, Expired, Review }
 public sealed record CheckResult(Outcome Outcome, string Detail, DateOnly? Birth = null, DateOnly? Expiration = null, bool NeedsDateConfirmation = false,
     string? FirstName = null, string? LastName = null, string? NameNote = null, bool KeyboardTransport = false,
-    [property: JsonIgnore] string? CardIdentity = null)
+    [property: JsonIgnore] string? CardIdentity = null, string? IssuingState = null)
 {
     public string? DisplayName => FirstName != null && LastName != null ? FirstName + " " + LastName : null;
 }
@@ -29,7 +29,7 @@ public static partial class Barcode
         if (text.Any(c => c > 127)) return Bad("Unsupported character encoding. Match the scanner keyboard layout to Windows and rescan.");
         if (text.Length < 21 || !Digits().IsMatch(text.Substring(9, 12))) return Bad("Incomplete or malformed AAMVA header.");
         var version = text.Substring(15, 2);
-        if (version is not ("08" or "09" or "10")) return Bad("Unsupported AAMVA version. Supported versions: 08, 09 and 10.");
+        if (version is not ("08" or "09" or "10" or "11")) return Bad("Unsupported AAMVA version. Supported versions: 08 through 11.");
         int count = int.Parse(text.AsSpan(19, 2), CultureInfo.InvariantCulture);
         int directoryEnd = 21 + count * 10;
         if (count == 0 || text.Length < directoryEnd) return Bad("Incomplete subfile directory.");
@@ -73,12 +73,13 @@ public static partial class Barcode
         }
         if (!Date("DBB", out var birth) || !Date("DBA", out var expiry) || !Date("DBD", out var issued))
             return Bad("Missing or invalid birth, expiration or issue date. Manual review required.");
+        string? issuingState = IssuingJurisdiction.FromIin(text.Substring(9, 6));
         if (birth > today || issued > today || issued < birth || expiry < issued || birth < today.AddYears(-125))
-            return new(Outcome.Review, "Dates are inconsistent. Compare the printed card and review manually.", birth, expiry);
+            return new(Outcome.Review, "Dates are inconsistent. Compare the printed card and review manually.", birth, expiry, IssuingState: issuingState);
         var name = ReadName(fields);
         string? identity = fields.TryGetValue("DAQ", out var cardNumber) && Regex.IsMatch(cardNumber, @"^[A-Z0-9-]{1,80}$", RegexOptions.CultureInvariant)
             ? text.Substring(9, 6) + "|" + country + "|" + cardNumber + "|" + birth.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) : null;
-        CheckResult Finish(CheckResult r) => r with { FirstName = name.First, LastName = name.Last, NameNote = name.Note, CardIdentity = identity };
+        CheckResult Finish(CheckResult r) => r with { FirstName = name.First, LastName = name.Last, NameNote = name.Note, CardIdentity = identity, IssuingState = issuingState };
         if (fields.ContainsKey("DDB") && (!Date("DDB", out var revised) || revised > issued))
             return Finish(new(Outcome.Review, "Card revision date is invalid or later than the issue date. Compare the printed card and review manually.", birth, expiry));
         if (fields.TryGetValue("DBC", out var sex) && sex is not ("1" or "2" or "9"))
@@ -118,7 +119,7 @@ public static partial class Barcode
         // partial/headerless recovery remains operator-assisted.
         bool nameStart = text.StartsWith("DCS", StringComparison.Ordinal) || text.StartsWith("CS", StringComparison.Ordinal)
             || text.StartsWith("DLDCS", StringComparison.Ordinal) || text.StartsWith("IDDCS", StringComparison.Ordinal);
-        bool flatHeader = Regex.IsMatch(text, @"^@?ANSI [0-9]{6}(08|09|10)[0-9]{4}", RegexOptions.CultureInvariant);
+        bool flatHeader = Regex.IsMatch(text, @"^@?ANSI [0-9]{6}(08|09|10|11)[0-9]{4}", RegexOptions.CultureInvariant);
         if (!nameStart && !flatHeader) return Bad("The scanner did not send a supported header. Check Scanner setup and scan again.");
         text = text.TrimEnd('\r', '\n', '\t', '\u0003');
         if (text.Any(c => char.IsControl(c) && c is not ('\r' or '\n' or '\t' or '\u001e')))
@@ -152,14 +153,14 @@ public static partial class Barcode
         string body = "DL" + string.Join('\n', recovered.Select(p => p.Key + p.Value)) + "\r";
         var result = Check($"@\n\u001e\rANSI 636000100001DL0031{body.Length:D4}{body}", today);
         if (result.Outcome == Outcome.Review) return result;
-        return result with { Outcome = Outcome.Review, NeedsDateConfirmation = true,
+        return result with { Outcome = Outcome.Review, NeedsDateConfirmation = true, IssuingState = null,
             NameNote = result.DisplayName == null ? result.NameNote : "Recovered name: compare it with the printed card before copying.",
             Detail = "Dates recovered from scanner text. Formatting is incomplete, so full barcode checks are unavailable. Compare both dates with the printed card, then confirm below." };
     }
 
     private static string? RestoreKeyboardFrame(string text)
     {
-        var header = Regex.Match(text, @"^@?ANSI ([0-9]{6}(?:08|09|10)[0-9]{2}01)(DL|ID)0031([0-9]{4})", RegexOptions.CultureInvariant);
+        var header = Regex.Match(text, @"^@?ANSI ([0-9]{6}(?:08|09|10|11)[0-9]{2}01)(DL|ID)0031([0-9]{4})", RegexOptions.CultureInvariant);
         if (!header.Success) return null;
         string type = header.Groups[2].Value;
         string body = text[header.Length..];
@@ -200,7 +201,7 @@ public static partial class Barcode
 
     private static string? RestoreTwoSubfileFrame(string text)
     {
-        var header = Regex.Match(text, @"^@?ANSI ([0-9]{6}(?:08|09|10)[0-9]{2}02)(DL|ID)0041([0-9]{4})(Z[A-Z])([0-9]{4})([0-9]{4})", RegexOptions.CultureInvariant);
+        var header = Regex.Match(text, @"^@?ANSI ([0-9]{6}(?:08|09|10|11)[0-9]{2}02)(DL|ID)0041([0-9]{4})(Z[A-Z])([0-9]{4})([0-9]{4})", RegexOptions.CultureInvariant);
         if (!header.Success) return null;
         string firstType = header.Groups[2].Value, zoneType = header.Groups[4].Value;
         int firstLength = int.Parse(header.Groups[3].Value, CultureInfo.InvariantCulture);

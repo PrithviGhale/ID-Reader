@@ -185,6 +185,7 @@ public partial class MainWindow : Window
         ResultSubtitle.Text = "The next card starts a fresh check.";
         Detail.Text = "Scan the large barcode on the back of the ID. Keep this window active.";
         BirthLabel.Text = ExpiryLabel.Text = "—"; DemoBadge.Visibility = Visibility.Collapsed;
+        ExpiryCountdownLabel.Text = ""; IssuingStateLabel.Text = "—";
         NamePanel.Visibility = Visibility.Collapsed; NameLabel.Text = "NAME NOT AVAILABLE"; CopyNameButton.IsEnabled = false;
         NameCopyStatus.Text = "Compare the printed name before copying.";
         HistoryCopyStatus.Text = "";
@@ -226,6 +227,8 @@ public partial class MainWindow : Window
         history.Record(currentScanId, result, demo, false, currentScanTime, Today, CurrentVisitLabel, rawBarcode); UpdateHistoryUI();
         BirthLabel.Text = result.Birth?.ToString("MMM dd, yyyy", System.Globalization.CultureInfo.InvariantCulture) ?? "—";
         ExpiryLabel.Text = result.Expiration?.ToString("MMM dd, yyyy", System.Globalization.CultureInfo.InvariantCulture) ?? "—";
+        ExpiryCountdownLabel.Text = ExpirationCountdown.Describe(result.Expiration, Today, result.Outcome != Outcome.Review);
+        IssuingStateLabel.Text = result.IssuingState ?? "Unavailable in checked barcode";
         Animate(ResultCard); privacy.Stop(); privacy.Start();
     }
     private void Animate(UIElement element, bool opening = false)

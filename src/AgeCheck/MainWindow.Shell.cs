@@ -106,6 +106,8 @@ public partial class MainWindow
         HistoryDetailTime.Text = "Scanned " + entry.ScannedAt.ToLocalTime().ToString("MMM d, yyyy 'at' h:mm tt");
         HistoryDetailBirth.Text = entry.Birth?.ToString("MMM dd, yyyy", System.Globalization.CultureInfo.InvariantCulture) ?? "Unavailable";
         HistoryDetailExpiry.Text = entry.Expiration?.ToString("MMM dd, yyyy", System.Globalization.CultureInfo.InvariantCulture) ?? "Unavailable";
+        HistoryDetailExpiryCountdown.Text = ExpirationCountdown.Describe(entry.Expiration, DateOnly.FromDateTime(entry.ScannedAt.LocalDateTime), entry.Outcome != Outcome.Review);
+        HistoryDetailIssuer.Text = entry.IssuingState is { } state ? "Issued by " + state : "Issuing state unavailable";
         HistoryDetailReason.Text = entry.Detail ?? "";
         HistoryDetailDates.Visibility = Visibility.Visible;
         HistoryDetailCopyBarcode.Visibility = BarcodeCopyStatus.Visibility = entry.CanCopyBarcode ? Visibility.Visible : Visibility.Collapsed;
@@ -123,6 +125,7 @@ public partial class MainWindow
         HistoryDetailStatus.Text = entry.VisitLabel;
         HistoryDetailTime.Text = entry.LastSeenLabel;
         HistoryDetailDates.Visibility = Visibility.Collapsed;
+        HistoryDetailExpiryCountdown.Text = HistoryDetailIssuer.Text = "";
         HistoryDetailReason.Text = "Saved visits do not contain birth or expiration dates. Scan the card again to check today's age and expiration.";
         HistoryDetailCopyBarcode.Visibility = BarcodeCopyStatus.Visibility = Visibility.Collapsed;
         HistoryDetail.BringIntoView();

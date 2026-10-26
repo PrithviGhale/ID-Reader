@@ -42,7 +42,7 @@ Recovered dates appear with **Check the printed dates**. Compare the birth and e
 | Symptom | Try |
 | --- | --- |
 | Scanner beeps, nothing happens | Click AgeCheck, select Scan an ID, and check USB keyboard mode. The beep is only a decode indication. |
-| Unsupported header | Check control substitutions, prefix settings and the keyboard layout. Only AAMVA ANSI versions 08–10 are supported. |
+| Unsupported header | Check control substitutions, prefix settings and the keyboard layout. AAMVA ANSI versions 08–11 are supported. |
 | Truncated or inconsistent length | Disable editing/stripping of control characters. Ensure the entire barcode is transmitted. Incomplete transmissions get 2 seconds of silence before review; reduce excessive scanner delays. |
 | Scan exceeds 20 seconds | Reduce excessive inter-character delays and retry after Clear. |
 | Input limit exceeded | Choose Clear and confirm the scanner is transmitting just one ID, not a batch. |
