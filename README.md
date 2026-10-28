@@ -31,11 +31,11 @@ One thing I found interesting while building it: a scanner can send the informat
 | Feature | How it helps |
 | --- | --- |
 | **21+ age check** | Checks whether the barcode birth date says the person is at least 21. |
-| **Image Scanner** | Paste a photo of the back-of-ID PDF417 barcode or open a JPG, PNG or BMP. Decoding and age checks run locally, with no paid service or upload. |
+| **Photo + text** | Paste a photo of the back-of-ID PDF417 barcode, open a JPG, PNG or BMP, or paste complete scanner barcode text. Checks run locally, with no paid service or upload. |
 | **Current age and birthdays** | Shows age, a birthday-today message or days until the next birthday, and days until 21 for younger customers. |
 | **Returning customers** | Recognizes a previously scanned card using a keyed fingerprint and shows a welcome-back message. |
 | **Expiration check** | Shows when the ID's barcode expiration date has passed. |
-| **Issuing state and countdown** | Shows the jurisdiction named by the barcode's issuer code and calendar days until expiration, or days since it expired. The address-state field is not used as the issuing state. |
+| **Issuing state and countdown** | Shows the jurisdiction named by the barcode's issuer code in a styled state badge, plus calendar days until expiration or days since it expired. The address-state field is not used as the issuing state. |
 | **Clear results** | Large text shows 21+, Under 21, Expired, or Manual review. |
 | **Date comparison** | Shows the birth date and expiration date so you can compare them with the card. |
 | **Scanner text recovery** | Complete supported keyboard frames show an age result directly; incomplete recoveries ask you to confirm the printed dates. |
@@ -46,28 +46,30 @@ One thing I found interesting while building it: a scanner can send the informat
 | **Automatic clearing** | Clears results after 30 seconds, on the next scan, or when you leave the window. |
 | **Works offline** | No internet is needed to check a scan. |
 | **Built-in updates** | Check for updates, read what's new, download, and restart when you choose. |
-| **Simple, smooth design** | A clean Windows interface with short animations and no constantly running effects. |
+| **New desk design** | A side navigation rail on wide screens, clear scan status, updated icons, and short hover and result animations. No effect runs constantly while idle. |
 | **Light and dark modes** | Choose your preferred look in Settings. Your choice stays on this PC. |
 | **Opening and page animations** | A short opening reveal and smooth page changes, with a setting to turn them off. |
 | **Flexible layout** | Adjusts to small windows, laptops, large monitors, and Windows display scaling. Scroll to reach extra content on small screens. |
 | **Color-changing edges** | Green for 21+, red for under 21 or expired, and orange for manual review. Text explains each result too. |
-| **Collapsible menu** | Open the left menu with ☰. Settings are behind the gear at the top right. |
+| **Navigation** | Use the left rail on wide screens or open the menu with ☰ on smaller windows. Settings are behind the gear at the top right. |
 | **Demo mode** | Try made-up examples without scanning an ID. Each demo is clearly marked. |
 
 ## Get started
 
-To check a photo, open **☰ → Image Scanner**, copy a clear photo of the entire barcode and choose **Paste photo**. **Open image file** also accepts JPG, PNG and BMP. This uses the same date and field checks as a scanner result. A blurry, cropped or glare-covered image may not decode; the app gives photo tips and asks for another image or manual review. Photos are processed in memory and are not saved by AgeCheck. The free [ZXing.Net](https://github.com/micjahn/ZXing.Net) PDF417 decoder runs on your PC; no cloud AI account is required. A readable barcode still cannot prove the physical ID is authentic.
+To check a photo, open **Photo + text**, copy a clear photo of the entire barcode and choose **Paste photo**. **Open image file** also accepts JPG, PNG and BMP. This uses the same date and field checks as a scanner result. A blurry, cropped or glare-covered image may not decode; the app gives photo tips and asks for another image or manual review. Photos are processed in memory and are not saved by AgeCheck. The free [ZXing.Net](https://github.com/micjahn/ZXing.Net) PDF417 decoder runs on your PC; no cloud AI account is required. A readable barcode still cannot prove the physical ID is authentic.
+
+To check text copied from a PDF417 scanner, open **Photo + text**, paste the complete output into **Paste barcode text**, and choose **Check pasted text**. The input box clears after the check. The result can be copied during the session; copied barcode text contains personal information.
 
 If the barcode is small within a larger photo, AgeCheck also searches overlapping parts of the picture. For best results, take the photo closer and tap the barcode to focus. Enlarging an already blurry photo cannot restore missing detail.
 
 Image Scanner also tries a high-contrast pass on small regions. Some photos still cannot be decoded when the individual barcode bars are blurred or compressed; in that case use a sharper photo or the physical PDF417 scanner. AgeCheck never guesses age or expiration from an unreadable image.
 
-![AgeCheck Image Scanner tab with paste and open-photo buttons](docs/images/image.png)
+![AgeCheck Photo and text tab with image and barcode text options](docs/images/image.png)
 
 1. **[Open the latest release](https://github.com/PrithviGhale/ID-Reader/releases/latest)** and download **`AgeCheck-win-x64-Setup.exe`**.
 2. Run the installer. Everything the app needs is included.
 3. Follow the **[scanner setup guide](docs/SCANNER_SETUP.md)**.
-4. Open **☰ → Scan cards**, keep the window active, and scan the barcode on the back of the card.
+4. Open **Scan cards** from the left rail or ☰ menu, keep the window active, and scan the barcode on the back of the card.
 5. Compare the result with the printed card and the customer. **Just scan the next card** for the next customer; no Next button is needed. Clear result is optional.
 
 **Already using version 1.0.0?** Close and uninstall that version, then install the latest AgeCheck Setup. This one-time reinstall removes the old publisher and installation name. Versions 1.0.1 and newer can update inside the app. Session history is never migrated or saved across restarts.

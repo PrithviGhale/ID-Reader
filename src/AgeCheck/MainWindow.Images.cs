@@ -14,6 +14,55 @@ public partial class MainWindow
 {
     private int imageGeneration;
 
+    private void PasteBarcodeText_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            if (!Clipboard.ContainsText()) { BarcodeTextStatus.Text = "No text is on the clipboard."; return; }
+            var text = Clipboard.GetText();
+            if (text.Length > Barcode.InputLimit) { BarcodeTextStatus.Text = "Barcode text is too long to check."; return; }
+            BarcodeTextInput.Text = text;
+            BarcodeTextStatus.Text = "Text pasted. Choose Check pasted text to read it.";
+        }
+        catch (ExternalException) { BarcodeTextStatus.Text = "Clipboard is busy. Try pasting again."; }
+    }
+
+    private async void CheckBarcodeText_Click(object sender, RoutedEventArgs e) => await CheckBarcodeText();
+
+    private async Task CheckBarcodeText()
+    {
+        string raw = BarcodeTextInput.Text;
+        if (string.IsNullOrWhiteSpace(raw)) { BarcodeTextStatus.Text = "Paste scanner text first."; return; }
+        if (raw.Length > Barcode.InputLimit) { BarcodeTextStatus.Text = "Barcode text is too long to check."; return; }
+        BarcodeTextInput.Clear();
+        Clear();
+        int generation = imageGeneration;
+        BarcodeTextStatus.Text = "Checking barcode fields and dates on this PC...";
+        try
+        {
+            var result = await Task.Run(() => Barcode.Check(raw, Today, allowScannerRecovery: true));
+            if (generation != imageGeneration || activePage != ImagePage) return;
+            ShowResult(result, false, raw);
+            PresentAlternateResult(result);
+            BarcodeTextStatus.Text = result.Outcome == Outcome.Review
+                ? "Text read; the ID data needs manual review. Compare the physical card."
+                : "Text checked locally. Compare the barcode result with the physical ID.";
+        }
+        catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
+        {
+            if (generation == imageGeneration) BarcodeTextStatus.Text = "Could not check that text. Try copying the complete scanner output again.";
+        }
+    }
+
+    private void PresentAlternateResult(CheckResult result)
+    {
+        ImageResultHeadline.Text = Headline.Text;
+        ImageResultName.Text = result.DisplayName ?? "Name unavailable";
+        ImageResultDetails.Text = $"Age: {(result.Outcome == Outcome.Review ? "review needed" : AgeLabel.Text)}  |  Birth date: {BirthLabel.Text}\nExpires: {ExpiryLabel.Text}  |  {ExpiryCountdownLabel.Text}\nIssued by: {IssuingStateLabel.Text}\n{result.Detail}";
+        ImageResultPanel.Visibility = Visibility.Visible;
+        Animate(ImageResultPanel);
+    }
+
     private async void PasteImage_Click(object sender, RoutedEventArgs e)
     {
         try
@@ -76,11 +125,7 @@ public partial class MainWindow
             var result = Barcode.Check(decoded, Today);
             Clear();
             ShowResult(result, false, decoded);
-            ImageResultHeadline.Text = Headline.Text;
-            ImageResultName.Text = result.DisplayName ?? "Name unavailable";
-            ImageResultDetails.Text = $"Age: {(result.Outcome == Outcome.Review ? "review needed" : AgeLabel.Text)}  |  Birth date: {BirthLabel.Text}\nExpires: {ExpiryLabel.Text}  |  {ExpiryCountdownLabel.Text}\nIssued by: {IssuingStateLabel.Text}\n{result.Detail}";
-            ImageResultPanel.Visibility = Visibility.Visible;
-            Animate(ImageResultPanel);
+            PresentAlternateResult(result);
             ImageStatus.Text = result.Outcome == Outcome.Review ? "Barcode decoded; the ID data needs manual review." : "Barcode decoded and checked locally. Compare it with the physical ID.";
         }
         catch (Exception ex) when (ex is ArgumentException or InvalidDataException or OutOfMemoryException or ExternalException)

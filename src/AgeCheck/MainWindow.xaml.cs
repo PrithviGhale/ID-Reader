@@ -22,7 +22,7 @@ public partial class MainWindow : Window
     private bool drawerOpen;
     private readonly SolidColorBrush edgeBrush = new(Colors.Transparent);
     private Action<string> writeClipboard = Clipboard.SetText;
-    private readonly DispatcherTimer quiet = new() { Interval = TimeSpan.FromMilliseconds(700) };
+    private readonly DispatcherTimer quiet = new() { Interval = TimeSpan.FromMilliseconds(500) };
     private readonly DispatcherTimer deadline = new() { Interval = TimeSpan.FromSeconds(20) };
     private readonly DispatcherTimer privacy = new() { Interval = TimeSpan.FromSeconds(30) };
     private readonly UpdateManager? updater;
@@ -96,11 +96,12 @@ public partial class MainWindow : Window
         quiet.Tick += async (_, _) => await FinishScan();
         deadline.Tick += (_, _) => { string partial = scan.Snapshot(); Clear(); inputBlocked = true; ShowResult(new(Outcome.Review, "Scan exceeded 20 seconds. Clear and rescan."), false, partial); };
         privacy.Tick += (_, _) => Clear();
-        Deactivated += (_, _) => Clear();
+        Deactivated += (_, _) => { Clear(); BarcodeTextInput.Clear(); };
         Closed += (_, _) => { quiet.Stop(); deadline.Stop(); privacy.Stop(); scan.Clear(); history.Clear(); };
         StateChanged += (_, _) => UpdateWindowState();
         PreviewTextInput += (_, e) => { if (CanCapture) { Receive(e.Text); e.Handled = true; } };
         PreviewKeyDown += OnKey;
+        InstallButtonHover();
         Loaded += async (_, _) =>
         {
             Focus();
@@ -110,7 +111,7 @@ public partial class MainWindow : Window
             if (args.Contains("--image-test")) { await ImageSelfTest(); return; }
             if (args.Contains("--screenshot")) { suppressAnimations = true; await ExportScreenshots(); return; }
             if (args.Contains("--motion-test")) { await MotionTest(); return; }
-            Animate(PageHost, true); Animate(BrandMark, true);
+            Animate(PageHost, true); Animate(BrandMark, true); Animate(ScanHero, true);
             if (StartupChecks.IsChecked == true) await CheckUpdates();
         };
     }
@@ -136,6 +137,7 @@ public partial class MainWindow : Window
             privacy.Stop(); deadline.Start(); Phase.Text = "RECEIVING"; Headline.Text = "Reading your scan";
             ResultSubtitle.Text = "Waiting for the complete scanner input.";
             Detail.Text = "Keep the scanner aimed until all data has arrived."; Symbol.Text = "↓";
+            StartScanBeam(); Animate(SymbolBox);
             PaintStatus(null);
         }
         if (!scan.Append(text))
@@ -145,7 +147,7 @@ public partial class MainWindow : Window
             return;
         }
         inputRevision++; lastInputAt = System.Diagnostics.Stopwatch.GetTimestamp();
-        quiet.Stop(); quiet.Interval = TimeSpan.FromMilliseconds(700); quiet.Start();
+        quiet.Stop(); quiet.Interval = TimeSpan.FromMilliseconds(500); quiet.Start();
     }
     private async Task FinishScan()
     {
@@ -173,6 +175,7 @@ public partial class MainWindow : Window
     {
         imageGeneration++;
         scanGeneration++; scan.Clear(); quiet.Stop(); deadline.Stop(); privacy.Stop(); inputBlocked = false; showingResult = false;
+        StopScanBeam();
         recoveredDates = null; recoveryDemo = false; RecoveryNotice.Visibility = Visibility.Collapsed;
         ResetCustomerDetails();
         visibleResult = null;
@@ -185,7 +188,7 @@ public partial class MainWindow : Window
         ResultSubtitle.Text = "The next card starts a fresh check.";
         Detail.Text = "Scan the large barcode on the back of the ID. Keep this window active.";
         BirthLabel.Text = ExpiryLabel.Text = "—"; DemoBadge.Visibility = Visibility.Collapsed;
-        ExpiryCountdownLabel.Text = ""; IssuingStateLabel.Text = "—";
+        ExpiryCountdownLabel.Text = ""; UpdateStateBadge(null);
         NamePanel.Visibility = Visibility.Collapsed; NameLabel.Text = "NAME NOT AVAILABLE"; CopyNameButton.IsEnabled = false;
         NameCopyStatus.Text = "Compare the printed name before copying.";
         HistoryCopyStatus.Text = "";
@@ -195,6 +198,7 @@ public partial class MainWindow : Window
     private void ShowResult(CheckResult result, bool demo, string? rawBarcode = null)
     {
         if (!demo && rawBarcode is { Length: > 0 and <= Barcode.InputLimit }) currentRawBarcode = rawBarcode;
+        StopScanBeam();
         CopyBarcodeButton.IsEnabled = currentRawBarcode != null;
         visibleResult = result;
         if (currentScanId == Guid.Empty) StartCustomer();
@@ -228,7 +232,7 @@ public partial class MainWindow : Window
         BirthLabel.Text = result.Birth?.ToString("MMM dd, yyyy", System.Globalization.CultureInfo.InvariantCulture) ?? "—";
         ExpiryLabel.Text = result.Expiration?.ToString("MMM dd, yyyy", System.Globalization.CultureInfo.InvariantCulture) ?? "—";
         ExpiryCountdownLabel.Text = ExpirationCountdown.Describe(result.Expiration, Today, result.Outcome != Outcome.Review);
-        IssuingStateLabel.Text = result.IssuingState ?? "Unavailable in checked barcode";
+        UpdateStateBadge(result.IssuingState);
         Animate(ResultCard); privacy.Stop(); privacy.Start();
     }
     private void Animate(UIElement element, bool opening = false)
@@ -261,6 +265,7 @@ public partial class MainWindow : Window
         if (page == UpdatesPage) page = SettingsPage;
         CloseDrawer();
         Clear(); ScanPage.Visibility = ImagePage.Visibility = SetupPage.Visibility = SettingsPage.Visibility = HistoryPage.Visibility = Visibility.Collapsed;
+        if (page != ImagePage) BarcodeTextInput.Clear();
         activePage = page;
         page.Visibility = Visibility.Visible; Animate(page);
         if (page == HistoryPage) RefreshCustomers();
@@ -301,6 +306,10 @@ public partial class MainWindow : Window
     private void AdaptLayout(double width)
     {
         bool compact = width < 800;
+        bool showRail = width >= 1050;
+        RailColumn.Width = new GridLength(showRail ? 220 : 0);
+        NavigationRail.Visibility = showRail ? Visibility.Visible : Visibility.Collapsed;
+        MenuButton.Visibility = showRail ? Visibility.Collapsed : Visibility.Visible;
         BrandWordmark.Visibility = width < 600 ? Visibility.Collapsed : Visibility.Visible;
         PageHost.Margin = new Thickness(width < 600 ? 16 : 32, 22, width < 600 ? 16 : 32, 22);
         ResultCard.Padding = new Thickness(width < 600 ? 18 : 26);
@@ -339,7 +348,7 @@ public partial class MainWindow : Window
     }
     private void PaintNavigation()
     {
-        foreach (var (button,page) in new[] { (ScanNav, ScanPage), (ImageNav, ImagePage), (HistoryNav, HistoryPage), (SetupNav, SetupPage), (SettingsDrawerNav, SettingsPage), (SettingsNav, SettingsPage) })
+        foreach (var (button,page) in new[] { (ScanNav, ScanPage), (ImageNav, ImagePage), (HistoryNav, HistoryPage), (SetupNav, SetupPage), (SettingsDrawerNav, SettingsPage), (SettingsNav, SettingsPage), (RailScan, ScanPage), (RailImage, ImagePage), (RailHistory, HistoryPage), (RailSetup, SetupPage), (RailSettings, SettingsPage) })
         {
             button.SetResourceReference(BackgroundProperty, page == activePage ? "AccentSoft" : "Surface");
             button.SetResourceReference(ForegroundProperty, page == activePage ? "AccentText" : "Muted");

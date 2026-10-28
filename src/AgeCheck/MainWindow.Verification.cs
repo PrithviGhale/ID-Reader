@@ -184,6 +184,12 @@ public partial class MainWindow
             Check(!history.Enabled && history.Entries.Count==0,"Disabling history immediately clears all entries");
             Check(JsonSerializer.Deserialize<Preferences>(File.ReadAllText(settingsPath))?.SessionHistory==false,"History preference saves without card data");
             HistoryEnabled.IsChecked=true; HistoryEnabled_Click(this,new RoutedEventArgs()); ClearHistory_Click(this,new RoutedEventArgs());
+            Page(ImagePage);
+            BarcodeTextInput.Text = Demo.CreateNamed(Today.AddYears(-25), Today.AddYears(3), Today.AddYears(-1));
+            await CheckBarcodeText();
+            Check(ImageResultPanel.Visibility == Visibility.Visible && ImageResultHeadline.Text == "21 or older", "Pasted PDF417 text uses the same age check as a physical scan");
+            Check(BarcodeTextInput.Text.Length == 0 && CopyBarcodeButton.IsEnabled, "Pasted input clears after checking and barcode text remains copyable during the session");
+            Check(StateAbbreviation("New Hampshire") == "NH" && StateAbbreviation("California") == "CA" && StateAbbreviation("Florida") == "FL", "State badges label recognized issuers");
             Page(ScanPage); Activate();
         }
         finally { writeClipboard=previousClipboard; suppressAnimations=previousSuppression; }
