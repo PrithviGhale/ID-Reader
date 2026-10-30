@@ -80,7 +80,7 @@ Image Scanner also tries a high-contrast pass on small regions. Some photos stil
 - A scanner that can read PDF417 barcodes and type them into Windows.
 - The setup guide is written for the **Honeywell Xenon XP 1950g**. Physical testing with that scanner is still needed.
 
-AgeCheck supports selected US and Canadian AAMVA barcode formats, versions 08–11. Unsupported, incomplete, or conflicting data asks for manual review. It does not support every ID format. The issuing-jurisdiction label comes from the [AAMVA issuer code list](https://www.aamva.org/identity/issuer-identification-numbers-(iin)), not the cardholder's address field, and does not authenticate the card.
+AgeCheck supports selected US and Canadian AAMVA barcode formats, version 03 and versions 08–11. Version 03 includes an older combined given-name field used by the reported New York layout. Unsupported, incomplete, or conflicting data asks for manual review. It does not support every ID format. The issuing-jurisdiction label comes from the [AAMVA issuer code list](https://www.aamva.org/identity/issuer-identification-numbers-(iin)), not the cardholder's address field, and does not authenticate the card.
 
 Version **1.4.0** lets you open a session scan for its checked details and copy barcode text from the current result or any session scan. Session barcode text disappears when history is cleared, turned off or the app closes. It is not stored in remembered customers. Copying places personal barcode data on the Windows clipboard; paste it only where intended.
 

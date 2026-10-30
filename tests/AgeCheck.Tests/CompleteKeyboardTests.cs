@@ -5,6 +5,37 @@ namespace AgeCheck.Tests;
 public class CompleteKeyboardTests
 {
     private static readonly DateOnly Today = new(2026, 10, 22);
+    // Fictional version-03 New York layout: DCT given name, padded values,
+    // and a second jurisdiction subfile. No customer scan is stored in tests.
+    private static string OldNewYork()
+    {
+        string[] fields = ["DCAD   ", "DCBNONE      ", "DCDNONE ", "DBA03092034",
+            "DCSEXAMPLE                  ", "DCTALEX                     ", "DBD03192026",
+            "DBB03092005", "DBC2", "DAYBRO", "DAU505   ", "DAG25 TEST RD              ",
+            "DAITEST TOWN           ", "DAJNY", "DAK136170000  ", "DAQTEST0001",
+            "DCFTESTDISCRIMINATOR", "DCGUSA", "DDAN", "DDB09282017", "DDD0"];
+        string first = "DL" + string.Join('\n', fields) + "\r";
+        string second = "ZNZNAEXAMPLE@ALEX      \nZNB6P;+1>PsdKY++X_\"test'0E6/Gj;5XgAs#UP\r";
+        return $"@\n\u001e\rANSI 636001030302DL0041{first.Length:D4}ZN{41 + first.Length:D4}{second.Length:D4}{first}{second}";
+    }
+
+    [Fact]
+    public void Version03NewYorkTwoSubfilesAndLabeledKeyboardInput()
+    {
+        var strict = OldNewYork();
+        var labeled = strict.Replace("@\n\u001e\rANSI ", "@[LF][CR]ANSI ").Replace("\n", "[LF]").Replace("\r", "[CR]") + "[CR]";
+        foreach (var scan in new[] { strict, labeled })
+        {
+            var result = Barcode.Check(scan, new(2026, 10, 29), allowScannerRecovery: true);
+            Assert.Equal(Outcome.Passed, result.Outcome);
+            Assert.Equal("ALEX EXAMPLE", result.DisplayName);
+            Assert.Equal("New York", result.IssuingState);
+            Assert.Equal(new DateOnly(2005, 3, 9), result.Birth);
+            Assert.Equal(new DateOnly(2034, 3, 9), result.Expiration);
+        }
+        Assert.Equal(Outcome.Review, Barcode.Check(labeled[..^10], new(2026, 10, 29), true).Outcome);
+        Assert.Equal(Outcome.Review, Barcode.Check(strict.Replace("DBB03092005", "DBB02302005"), new(2026, 10, 29), true).Outcome);
+    }
     private static string Sample(int years = 25, bool expired = false) => Demo.CompleteKeyboard(
         Today.AddYears(-years), expired ? Today.AddDays(-1) : Today.AddYears(2), Today.AddYears(-1));
 

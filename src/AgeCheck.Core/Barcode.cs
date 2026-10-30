@@ -29,7 +29,7 @@ public static partial class Barcode
         if (text.Any(c => c > 127)) return Bad("Unsupported character encoding. Match the scanner keyboard layout to Windows and rescan.");
         if (text.Length < 21 || !Digits().IsMatch(text.Substring(9, 12))) return Bad("Incomplete or malformed AAMVA header.");
         var version = text.Substring(15, 2);
-        if (version is not ("08" or "09" or "10" or "11")) return Bad("Unsupported AAMVA version. Supported versions: 08 through 11.");
+        if (version is not ("03" or "08" or "09" or "10" or "11")) return Bad("Unsupported AAMVA version. Supported versions: 03 and 08 through 11.");
         int count = int.Parse(text.AsSpan(19, 2), CultureInfo.InvariantCulture);
         int directoryEnd = 21 + count * 10;
         if (count == 0 || text.Length < directoryEnd) return Bad("Incomplete subfile directory.");
@@ -76,7 +76,7 @@ public static partial class Barcode
         string? issuingState = IssuingJurisdiction.FromIin(text.Substring(9, 6));
         if (birth > today || issued > today || issued < birth || expiry < issued || birth < today.AddYears(-125))
             return new(Outcome.Review, "Dates are inconsistent. Compare the printed card and review manually.", birth, expiry, IssuingState: issuingState);
-        var name = ReadName(fields);
+        var name = ReadName(fields, version);
         string? identity = fields.TryGetValue("DAQ", out var cardNumber) && Regex.IsMatch(cardNumber, @"^[A-Z0-9-]{1,80}$", RegexOptions.CultureInvariant)
             ? text.Substring(9, 6) + "|" + country + "|" + cardNumber + "|" + birth.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) : null;
         CheckResult Finish(CheckResult r) => r with { FirstName = name.First, LastName = name.Last, NameNote = name.Note, CardIdentity = identity, IssuingState = issuingState };
@@ -119,7 +119,7 @@ public static partial class Barcode
         // partial/headerless recovery remains operator-assisted.
         bool nameStart = text.StartsWith("DCS", StringComparison.Ordinal) || text.StartsWith("CS", StringComparison.Ordinal)
             || text.StartsWith("DLDCS", StringComparison.Ordinal) || text.StartsWith("IDDCS", StringComparison.Ordinal);
-        bool flatHeader = Regex.IsMatch(text, @"^@?ANSI [0-9]{6}(08|09|10|11)[0-9]{4}", RegexOptions.CultureInvariant);
+        bool flatHeader = Regex.IsMatch(text, @"^@?ANSI [0-9]{6}(03|08|09|10|11)[0-9]{4}", RegexOptions.CultureInvariant);
         if (!nameStart && !flatHeader) return Bad("The scanner did not send a supported header. Check Scanner setup and scan again.");
         text = text.TrimEnd('\r', '\n', '\t', '\u0003');
         if (text.Any(c => char.IsControl(c) && c is not ('\r' or '\n' or '\t' or '\u001e')))
@@ -160,7 +160,7 @@ public static partial class Barcode
 
     private static string? RestoreKeyboardFrame(string text)
     {
-        var header = Regex.Match(text, @"^@?ANSI ([0-9]{6}(?:08|09|10|11)[0-9]{2}01)(DL|ID)0031([0-9]{4})", RegexOptions.CultureInvariant);
+        var header = Regex.Match(text, @"^@?ANSI ([0-9]{6}(?:03|08|09|10|11)[0-9]{2}01)(DL|ID)0031([0-9]{4})", RegexOptions.CultureInvariant);
         if (!header.Success) return null;
         string type = header.Groups[2].Value;
         string body = text[header.Length..];
@@ -201,7 +201,7 @@ public static partial class Barcode
 
     private static string? RestoreTwoSubfileFrame(string text)
     {
-        var header = Regex.Match(text, @"^@?ANSI ([0-9]{6}(?:08|09|10|11)[0-9]{2}02)(DL|ID)0041([0-9]{4})(Z[A-Z])([0-9]{4})([0-9]{4})", RegexOptions.CultureInvariant);
+        var header = Regex.Match(text, @"^@?ANSI ([0-9]{6}(?:03|08|09|10|11)[0-9]{2}02)(DL|ID)0041([0-9]{4})(Z[A-Z])([0-9]{4})([0-9]{4})", RegexOptions.CultureInvariant);
         if (!header.Success) return null;
         string firstType = header.Groups[2].Value, zoneType = header.Groups[4].Value;
         int firstLength = int.Parse(header.Groups[3].Value, CultureInfo.InvariantCulture);
@@ -252,9 +252,11 @@ public static partial class Barcode
             + restoredFirst + restoredZone;
     }
 
-    private static (string? First,string? Last,string? Note) ReadName(Dictionary<string,string> fields)
+    private static (string? First,string? Last,string? Note) ReadName(Dictionary<string,string> fields, string version)
     {
-        if (!fields.TryGetValue("DAC",out var first) || !fields.TryGetValue("DCS",out var last)) return (null,null,"Name not available in this scan.");
+        if (!fields.TryGetValue("DCS",out var last)) return (null,null,"Name not available in this scan.");
+        if (!fields.TryGetValue("DAC",out var first) && (version != "03" || !fields.TryGetValue("DCT",out first)))
+            return (null,null,"Name not available in this scan.");
         if (new[]{"DDE","DDF"}.Any(k => fields.TryGetValue(k,out var flag) && flag != "N")) return (null,null,"Name may be shortened. Compare the printed card.");
         string? Clean(string value)
         {
