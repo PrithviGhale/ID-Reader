@@ -61,8 +61,14 @@ public class BarcodeTests
         var text = Valid();
         for (int i=0;i<text.Length;i++) Assert.Equal(Outcome.Review,Barcode.Check(text[..i],Today).Outcome);
     }
-    [Theory] [InlineData("08")] [InlineData("09")] [InlineData("10")] [InlineData("11")]
+    [Theory] [InlineData("04")] [InlineData("05")] [InlineData("06")] [InlineData("07")]
+    [InlineData("08")] [InlineData("09")] [InlineData("10")] [InlineData("11")]
     public void SupportedVersions(string version) { var t=Valid(); Assert.Equal(Outcome.Passed,Barcode.Check(t[..15]+version+t[17..],Today).Outcome); }
+    [Fact] public void NondriverIdSubfileUsesSameDateChecks()
+    {
+        var card = Valid().Replace("DL0031", "ID0031").Replace("DLDCG", "IDDCG");
+        Assert.Equal(Outcome.Passed, Barcode.Check(card, Today).Outcome);
+    }
     [Fact] public void UnsupportedVersion() { var t=Valid(); Assert.Equal(Outcome.Review,Barcode.Check(t[..15]+"12"+t[17..],Today).Outcome); }
     [Theory] [InlineData("\r")] [InlineData("\t")] [InlineData("\r\n")] [InlineData("\u0003")]
     public void Suffixes(string suffix) => Assert.Equal(Outcome.Passed,Barcode.Check(Valid()+suffix,Today).Outcome);

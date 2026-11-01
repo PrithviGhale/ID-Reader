@@ -27,9 +27,12 @@ public static partial class Barcode
         if (!text.StartsWith("@\n\u001e\rANSI ", StringComparison.Ordinal))
             return allowScannerRecovery ? RecoverScannerDates(text, today) : Bad("Unsupported barcode header or altered control characters. Check scanner setup.");
         if (text.Any(c => c > 127)) return Bad("Unsupported character encoding. Match the scanner keyboard layout to Windows and rescan.");
+        if (allowScannerRecovery && TryRecoverEmptyJurisdictionTerminator(text, today) is { } recovered)
+            return recovered;
         if (text.Length < 21 || !Digits().IsMatch(text.Substring(9, 12))) return Bad("Incomplete or malformed AAMVA header.");
         var version = text.Substring(15, 2);
-        if (version is not ("03" or "08" or "09" or "10" or "11")) return Bad("Unsupported AAMVA version. Supported versions: 03 and 08 through 11.");
+        if (version is not ("03" or "04" or "05" or "06" or "07" or "08" or "09" or "10" or "11"))
+            return Bad("Unsupported AAMVA version. Supported versions: 03 through 11.");
         int count = int.Parse(text.AsSpan(19, 2), CultureInfo.InvariantCulture);
         int directoryEnd = 21 + count * 10;
         if (count == 0 || text.Length < directoryEnd) return Bad("Incomplete subfile directory.");
@@ -109,7 +112,9 @@ public static partial class Barcode
         if (text.Any(c => c > 127)) return Bad("Unsupported character encoding. Match the scanner keyboard layout to Windows and rescan.");
         if (header.Success && text.Contains('\n') && text.Contains('\r'))
         {
-            var framed = Check("@\n\u001e\rANSI " + text[6..], today);
+            string restoredHeader = "@\n\u001e\rANSI " + text[6..];
+            if (TryRecoverEmptyJurisdictionTerminator(restoredHeader, today) is { } zoneRecovery) return zoneRecovery;
+            var framed = Check(restoredHeader, today);
             if (framed.Outcome != Outcome.Review)
                 return framed with { KeyboardTransport = true,
                     Detail = "Age and expiration calculated from the complete scanned fields. Compare the photograph and printed card with the customer. ID authenticity is not verified." };
@@ -119,7 +124,7 @@ public static partial class Barcode
         // partial/headerless recovery remains operator-assisted.
         bool nameStart = text.StartsWith("DCS", StringComparison.Ordinal) || text.StartsWith("CS", StringComparison.Ordinal)
             || text.StartsWith("DLDCS", StringComparison.Ordinal) || text.StartsWith("IDDCS", StringComparison.Ordinal);
-        bool flatHeader = Regex.IsMatch(text, @"^@?ANSI [0-9]{6}(03|08|09|10|11)[0-9]{4}", RegexOptions.CultureInvariant);
+        bool flatHeader = Regex.IsMatch(text, @"^@?ANSI [0-9]{6}(?:0[3-9]|10|11)[0-9]{4}", RegexOptions.CultureInvariant);
         if (!nameStart && !flatHeader) return Bad("The scanner did not send a supported header. Check Scanner setup and scan again.");
         text = text.TrimEnd('\r', '\n', '\t', '\u0003');
         if (text.Any(c => char.IsControl(c) && c is not ('\r' or '\n' or '\t' or '\u001e')))
@@ -158,9 +163,34 @@ public static partial class Barcode
             Detail = "Dates recovered from scanner text. Formatting is incomplete, so full barcode checks are unavailable. Compare both dates with the printed card, then confirm below." };
     }
 
+    private static CheckResult? TryRecoverEmptyJurisdictionTerminator(string text, DateOnly today)
+    {
+        // Some scanner output has a five-byte empty jurisdiction subfile followed
+        // by a CR that its directory did not count. The AAMVA standard counts the
+        // terminator, so this cannot become an automatic pass. Validate a corrected
+        // copy of the entire frame and expose dates only for printed-card review.
+        if (!text.StartsWith("@\n\u001e\rANSI ", StringComparison.Ordinal) || text.Length < 47
+            || text.Substring(37, 4) != "0005"
+            || !Digits().IsMatch(text.Substring(9, 12)) || text.Substring(19, 2) != "02"
+            || text.Substring(21, 2) is not ("DL" or "ID") || text.Substring(23, 4) != "0041"
+            || !Digits().IsMatch(text.Substring(27, 4)) || !Digits().IsMatch(text.Substring(33, 8))) return null;
+        string zoneType = text.Substring(31, 2);
+        if (zoneType[0] != 'Z' || zoneType[1] is < 'A' or > 'Z') return null;
+        int mainLength = int.Parse(text.AsSpan(27, 4), CultureInfo.InvariantCulture);
+        int zoneStart = int.Parse(text.AsSpan(33, 4), CultureInfo.InvariantCulture);
+        if (zoneStart != 41 + mainLength || zoneStart + 5 >= text.Length || text.Length > zoneStart + 7
+            || text.AsSpan(zoneStart, 5).ToString() != zoneType + zoneType + "A"
+            || text[(zoneStart + 5)..].Any(c => c != '\r')) return null;
+        string corrected = text[..37] + "0006" + text[41..];
+        var verified = Check(corrected, today);
+        if (verified.Outcome == Outcome.Review || verified.Birth is null || verified.Expiration is null) return null;
+        return verified with { Outcome = Outcome.Review, NeedsDateConfirmation = true, KeyboardTransport = true,
+            Detail = "Birth and expiration dates were read, but the empty jurisdiction subfile has an inconsistent length. Compare both dates with the printed card and confirm below; the full barcode did not pass validation." };
+    }
+
     private static string? RestoreKeyboardFrame(string text)
     {
-        var header = Regex.Match(text, @"^@?ANSI ([0-9]{6}(?:03|08|09|10|11)[0-9]{2}01)(DL|ID)0031([0-9]{4})", RegexOptions.CultureInvariant);
+        var header = Regex.Match(text, @"^@?ANSI ([0-9]{6}(?:0[3-9]|10|11)[0-9]{2}01)(DL|ID)0031([0-9]{4})", RegexOptions.CultureInvariant);
         if (!header.Success) return null;
         string type = header.Groups[2].Value;
         string body = text[header.Length..];
@@ -201,7 +231,7 @@ public static partial class Barcode
 
     private static string? RestoreTwoSubfileFrame(string text)
     {
-        var header = Regex.Match(text, @"^@?ANSI ([0-9]{6}(?:03|08|09|10|11)[0-9]{2}02)(DL|ID)0041([0-9]{4})(Z[A-Z])([0-9]{4})([0-9]{4})", RegexOptions.CultureInvariant);
+        var header = Regex.Match(text, @"^@?ANSI ([0-9]{6}(?:0[3-9]|10|11)[0-9]{2}02)(DL|ID)0041([0-9]{4})(Z[A-Z])([0-9]{4})([0-9]{4})", RegexOptions.CultureInvariant);
         if (!header.Success) return null;
         string firstType = header.Groups[2].Value, zoneType = header.Groups[4].Value;
         int firstLength = int.Parse(header.Groups[3].Value, CultureInfo.InvariantCulture);

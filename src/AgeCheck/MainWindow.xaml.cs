@@ -218,7 +218,7 @@ public partial class MainWindow : Window
             Outcome.Passed => result.KeyboardTransport ? "Scanned dates meet the 21+ age threshold" : "Barcode age check passed",
             Outcome.Under21 => "Barcode birth date is below the age threshold",
             Outcome.Expired => "Barcode expiration date has passed",
-            _ => result.NeedsDateConfirmation ? "Scanner text recovered · confirmation needed" : "Manual review required"
+            _ => result.NeedsDateConfirmation ? "Dates found · compare with the printed card" : "Manual review required"
         };
         Detail.Text = result.Detail;
         PaintStatus(result.Outcome);

@@ -5,6 +5,49 @@ namespace AgeCheck.Tests;
 public class CompleteKeyboardTests
 {
     private static readonly DateOnly Today = new(2026, 10, 22);
+    // Fictional data with the same field lengths and empty ZV subfile as the
+    // reported Vermont scan. The public test contains no customer's details.
+    private static string VermontEmptyZone()
+    {
+        string[] fields = ["DAQTEST0001", "DCAD", "DCBNONE", "DCDNONE", "DBA02172029",
+            "DCSEXAMPLE", "DACALEXANDR", "DADTESTNAME1", "DBD07062026", "DBB02172000",
+            "DBC2", "DAYBRO", "DAU070 in", "DAG100 TEST ST ", "DAITESTVILLE ", "DAJVT",
+            "DAK054010000", "DCFTEST00000000000001", "DCGUSA", "DDEN", "DDFN", "DDGN",
+            "DAH4 APT", "DCK", "DCU", "DAW150", "DDAF", "DDB10162018", "DDK1", "DDL "];
+        string main = "DL" + string.Join('\n', fields) + "\r";
+        Assert.Equal(273, main.Length);
+        return $"@\n\u001e\rANSI 636024100002DL00410273ZV03140005{main}ZVZVA\r";
+    }
+
+    [Fact]
+    public void VermontEmptyZoneShowsDatesForPrintedCardConfirmation()
+    {
+        string strictHeader = VermontEmptyZone();
+        string scannerText = strictHeader.Replace("@\n\u001e\rANSI ", "@[LF][CR]ANSI ")
+            .Replace("\n", "[LF]").Replace("\r", "[CR]") + "[CR]";
+        foreach (string scan in new[] { strictHeader, scannerText })
+        {
+            var result = Barcode.Check(scan, Today, allowScannerRecovery: true);
+            Assert.Equal(Outcome.Review, result.Outcome);
+            Assert.True(result.NeedsDateConfirmation);
+            Assert.Equal("ALEXANDR EXAMPLE", result.DisplayName);
+            Assert.Equal("Vermont", result.IssuingState);
+            Assert.Equal(new DateOnly(2000, 2, 17), result.Birth);
+            Assert.Equal(new DateOnly(2029, 2, 17), result.Expiration);
+        }
+        Assert.Equal(Outcome.Review, Barcode.Check(strictHeader, Today).Outcome);
+        Assert.False(Barcode.Check(strictHeader[..^1], Today, true).NeedsDateConfirmation);
+        Assert.False(Barcode.Check(strictHeader.Replace("DBB02172000", "DBB02302000"), Today, true).NeedsDateConfirmation);
+        Assert.False(Barcode.Check(strictHeader.Replace("ZV0314", "ZV0313"), Today, true).NeedsDateConfirmation);
+    }
+    [Theory]
+    [InlineData("04")] [InlineData("05")] [InlineData("06")] [InlineData("07")]
+    public void OlderCompleteKeyboardVersionsKeepDirectDateCheck(string version)
+    {
+        string scan = Demo.CompleteKeyboard(new(2000, 1, 2), new(2029, 1, 2), new(2024, 1, 2))
+            .Replace("63603910", "636039" + version, StringComparison.Ordinal);
+        Assert.Equal(Outcome.Passed, Barcode.Check(scan, Today, true).Outcome);
+    }
     // Fictional version-03 New York layout: DCT given name, padded values,
     // and a second jurisdiction subfile. No customer scan is stored in tests.
     private static string OldNewYork()
