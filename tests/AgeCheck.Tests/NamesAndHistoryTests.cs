@@ -15,10 +15,49 @@ public class NamesAndHistoryTests
         Assert.True(r.NeedsDateConfirmation); Assert.Equal("ALEX SAMPLE",r.DisplayName); Assert.DoesNotContain("TEST",r.DisplayName!);
     }
     [Fact] public void MissingNameNeverGuessed() => Assert.Null(Barcode.Check(Demo.Create(new(1998,7,14),new(2029,8,31),new(2025,8,1)),Today).DisplayName);
-    [Theory] [InlineData("T")] [InlineData("U")]
-    public void TruncatedNameCannotBeCopied(string flag)
+    [Fact]
+    public void TruncatedNameCannotBeCopied()
     {
-        var r=Barcode.Check(Named().Replace("DDFN","DDF"+flag),Today); Assert.Null(r.DisplayName); Assert.NotNull(r.NameNote);
+        var r=Barcode.Check(Named().Replace("DDFN","DDFT"),Today); Assert.Null(r.DisplayName); Assert.NotNull(r.NameNote);
+    }
+    [Theory]
+    [InlineData("DDE")]
+    [InlineData("DDF")]
+    public void UnknownTruncationShowsScannedNameWithWarning(string field)
+    {
+        var r=Barcode.Check(Named().Replace(field + "N", field + "U"),Today);
+        Assert.Equal(Outcome.Passed,r.Outcome);
+        Assert.Equal("ALEX SAMPLE",r.DisplayName);
+        Assert.Contains("shortened",r.NameNote!,StringComparison.OrdinalIgnoreCase);
+    }
+    [Fact]
+    public void NondriverIdWithUnknownNameFlagsShowsName()
+    {
+        string card = Named().Replace("DL0031", "ID0031").Replace("DLDCS", "IDDCS")
+            .Replace("DDEN", "DDEU").Replace("DDFN", "DDFU");
+        var result = Barcode.Check(card,Today);
+        Assert.Equal(Outcome.Passed,result.Outcome);
+        Assert.Equal("ALEX SAMPLE",result.DisplayName);
+        Assert.Contains("shortened",result.NameNote!,StringComparison.OrdinalIgnoreCase);
+    }
+    [Fact]
+    public void SouthCarolinaStyleIdRecoversNameWithUnknownTruncation()
+    {
+        string[] fields = ["DBA05172032", "DCSEXAMPLE", "DACALEX", "DADTEST",
+            "DBD05172024", "DBB01121998", "DBC1", "DAYBRO", "DAU077 in",
+            "DAG100 TEST AVE", "DAITESTVILLE", "DAJSC", "DAK295050000  ",
+            "DAQSYNTHETIC1", "DCFSYNTHETIC2", "DCGUSA", "DDEU", "DDFU", "DDGU",
+            "DCLBK ", "DC&OPTIONAL", "DDAF", "DDB01012018", "DAW185"];
+        string body = "ID" + string.Join('\n',fields) + "\r";
+        string scan = $"@[LF][CR]ANSI 636005090001ID0031{body.Length:D4}" +
+            body.Replace("\n","[LF]").Replace("\r","[CR]") + "[CR]";
+        var result = Barcode.Check(scan,Today,allowScannerRecovery:true);
+        Assert.Equal(Outcome.Review,result.Outcome);
+        Assert.True(result.NeedsDateConfirmation,result.Detail);
+        Assert.Equal("ALEX EXAMPLE",result.DisplayName);
+        Assert.Contains("shortened",result.NameNote!,StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(new DateOnly(1998,1,12),result.Birth);
+        Assert.Equal(new DateOnly(2032,5,17),result.Expiration);
     }
     [Fact] public void MissingFlattenedNameBoundaryDoesNotInventName()
     {

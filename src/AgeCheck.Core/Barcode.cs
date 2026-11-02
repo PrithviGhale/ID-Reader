@@ -140,6 +140,16 @@ public static partial class Barcode
                 Detail = checkedFrame.Outcome == Outcome.Review ? checkedFrame.Detail
                     : "Age and expiration calculated from the scanned dates. Compare the photograph and printed card with the customer. ID authenticity is not verified." };
         }
+        // In a flattened ID subfile, "ID" followed by the first DBA field looks
+        // like an extra DDB field. Remove only a recognized directory and its
+        // matching subfile designator before counting recovered field markers.
+        if (flatHeader)
+        {
+            var subfile = Regex.Match(text, @"^@?ANSI [0-9]{10}01(DL|ID)0031[0-9]{4}\1", RegexOptions.CultureInvariant);
+            if (!subfile.Success)
+                subfile = Regex.Match(text, @"^@?ANSI [0-9]{10}02(DL|ID)0041[0-9]{4}Z[A-Z][0-9]{8}\1", RegexOptions.CultureInvariant);
+            if (subfile.Success) text = text[subfile.Length..];
+        }
         var recovered = new Dictionary<string, string>();
         foreach (var key in new[] { "DCG", "DBB", "DBA", "DBD", "DDH", "DDI", "DDJ", "DDB", "DBC", "DDA", "DDE", "DDF", "DDG" })
         {
@@ -159,7 +169,7 @@ public static partial class Barcode
         var result = Check($"@\n\u001e\rANSI 636000100001DL0031{body.Length:D4}{body}", today);
         if (result.Outcome == Outcome.Review) return result;
         return result with { Outcome = Outcome.Review, NeedsDateConfirmation = true, IssuingState = null,
-            NameNote = result.DisplayName == null ? result.NameNote : "Recovered name: compare it with the printed card before copying.",
+            NameNote = result.NameNote ?? (result.DisplayName == null ? null : "Recovered name: compare it with the printed card before copying."),
             Detail = "Dates recovered from scanner text. Formatting is incomplete, so full barcode checks are unavailable. Compare both dates with the printed card, then confirm below." };
     }
 
@@ -287,14 +297,17 @@ public static partial class Barcode
         if (!fields.TryGetValue("DCS",out var last)) return (null,null,"Name not available in this scan.");
         if (!fields.TryGetValue("DAC",out var first) && (version != "03" || !fields.TryGetValue("DCT",out first)))
             return (null,null,"Name not available in this scan.");
-        if (new[]{"DDE","DDF"}.Any(k => fields.TryGetValue(k,out var flag) && flag != "N")) return (null,null,"Name may be shortened. Compare the printed card.");
+        if (new[]{"DDE","DDF"}.Any(k => fields.TryGetValue(k,out var flag) && flag == "T"))
+            return (null,null,"Name is marked as shortened. Compare the printed card.");
         string? Clean(string value)
         {
             value = Regex.Replace(value.Trim(), " +", " ").ToUpperInvariant();
             return value is not ("NONE" or "UNAVL") && Regex.IsMatch(value,@"^[A-Z][A-Z '\-]{0,79}$",RegexOptions.CultureInvariant) ? value : null;
         }
         var f=Clean(first); var l=Clean(last);
-        return f != null && l != null ? (f,l,null) : (null,null,"Name could not be read safely. Compare the printed card.");
+        if (f == null || l == null) return (null,null,"Name could not be read safely. Compare the printed card.");
+        bool unknown = new[]{"DDE","DDF"}.Any(k => fields.TryGetValue(k,out var flag) && flag == "U");
+        return (f,l,unknown ? "The barcode does not say whether this name was shortened. Compare it with the printed card before copying." : null);
     }
     private static Dictionary<string,string> RecoverNameFields(string text)
     {

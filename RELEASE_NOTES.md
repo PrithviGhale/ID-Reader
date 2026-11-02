@@ -1,8 +1,7 @@
-# AgeCheck 1.6.2 - More barcode layouts
+# AgeCheck 1.6.3 - Names with unknown truncation flags
 
-- Added assisted reading for the reported Vermont layout with an empty jurisdiction section whose declared length omits its trailing separator. The name, birth date, expiration and issuing state appear for comparison with the physical card; staff must confirm the printed dates before an age result appears.
-- Added complete-frame support for AAMVA PDF417 versions 04–07, alongside the existing 03 and 08–11 layouts, and verified the non-driver ID subfile path.
-- Clarified the scan screen when dates are found but printed-card confirmation is needed. The uncommon Vermont recovery uses a quick directory check before any deeper parsing.
-- Added fictional regression tests for the reported layout, older versions, malformed dates and truncated or inconsistent frames. No customer barcode or personal details are included in this release.
+- Show a scanned first and last name when its AAMVA truncation flag is `U` (unknown), with a clear reminder to compare the name with the printed card. Names explicitly marked as truncated (`T`) remain unavailable for copying.
+- Corrected scanner-text recovery for non-driver ID subfiles that begin with the expiration-date field. The `ID` marker next to `DBA` no longer looks like a second `DDB` revision-date field.
+- Added fictional regression tests for complete IDs, damaged scanner formatting, unknown name flags, dates and safe handling of genuinely truncated names. No customer's barcode or personal details were added to the repository.
 
 AgeCheck calculates age and expiration from barcode fields. It does not authenticate the physical ID or replace a comparison of the card, photograph and customer.

@@ -139,7 +139,7 @@ Updates now live in **Settings**, with a red **!** on the gear and update card w
 
 ## Names and history
 
-Names come from supported first/last-name fields; middle names are excluded. Shortened, missing or ambiguous names are shown as unavailable rather than guessed. Compare the printed name before copying it.
+Names come from supported first/last-name fields; middle names are excluded. A name marked as shortened (`T`), missing or ambiguous is shown as unavailable rather than guessed. When the barcode says it is unknown whether the name was shortened (`U`), AgeCheck shows the scanned name with a reminder to compare it with the printed card before copying.
 
 Open **☰ → History** to see names, scan times and results from this app session. Recovered-date confirmation updates the same entry. Demo entries are marked DEMO. History is capped at 100 entries, has a Clear history button, and can be switched off in Settings; switching it off also clears it.
 
