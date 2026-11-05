@@ -78,7 +78,7 @@ public partial class MainWindow
     private void UpdateStateBadge(string? state)
     {
         StateMonogram.Text = StateAbbreviation(state);
-        IssuingStateLabel.Text = state ?? "Unavailable in checked barcode";
+        IssuingStateLabel.Text = state ?? (visibleResult is null ? "Awaiting scan" : "Unavailable");
         IssuingStateLabel.ToolTip = state is null ? "Issuer code was not recognized" : "Issuer identified from the barcode header: " + state;
         IssuingStateLabel.FontFamily = new FontFamily(state is "New Hampshire" or "Florida" ? "Georgia" : "Segoe UI");
         IssuingStateLabel.FontStyle = state == "Florida" ? FontStyles.Italic : FontStyles.Normal;

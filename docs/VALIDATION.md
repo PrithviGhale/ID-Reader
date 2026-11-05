@@ -1,5 +1,11 @@
 # Validation record
 
+## Version 1.7.1 scan focus and navigation (November 5, 2026)
+
+- Added a WPF regression check that focuses the Home button, clicks it, and sends scanner text immediately. The Scan page receives that first input without an extra click.
+- Directional motion checks cover both left and right page moves, rest position, rapid tab changes, and the reduced-motion setting.
+- The scan banner was removed; wide and narrow layout checks pass. Screenshots use synthetic demo data.
+
 ## Version 1.7.0 counter redesign (November 5, 2026)
 
 - Release build and full packaging succeeded with zero build warnings or errors; all 201 core tests passed and the editor probe generated all 133 named controls.

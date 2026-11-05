@@ -113,7 +113,7 @@ public partial class MainWindow : Window
             if (args.Contains("--image-test")) { await ImageSelfTest(); return; }
             if (args.Contains("--screenshot")) { suppressAnimations = true; await ExportScreenshots(); return; }
             if (args.Contains("--motion-test")) { await MotionTest(); return; }
-            Animate(PageHost, true); Animate(BrandMark, true); Animate(ScanHero, true);
+            Animate(PageHost, true); Animate(BrandMark, true); Animate(ResultCard, true);
             if (StartupChecks.IsChecked == true) await CheckUpdates();
         };
     }
@@ -247,24 +247,24 @@ public partial class MainWindow : Window
         UpdateStateBadge(result.IssuingState);
         Animate(ResultCard); privacy.Stop(); privacy.Start();
     }
-    private void Animate(UIElement element, bool opening = false)
+    private void Animate(UIElement element, bool opening = false, int pageDirection = 0)
     {
         element.BeginAnimation(OpacityProperty, null);
         StopTransform(element.RenderTransform);
         element.Opacity = 1;
         element.RenderTransform = Transform.Identity;
         if (suppressAnimations || !motionEnabled || !SystemParameters.ClientAreaAnimation) return;
-        var duration = TimeSpan.FromMilliseconds(opening ? 520 : 340);
+        var duration = TimeSpan.FromMilliseconds(opening ? 520 : pageDirection == 0 ? 340 : 280);
         var easing = new QuarticEase { EasingMode = EasingMode.EaseOut };
         var move = new TranslateTransform(); var scale = new ScaleTransform(1,1);
         var transforms = new TransformGroup(); transforms.Children.Add(scale); transforms.Children.Add(move);
         element.RenderTransformOrigin = new Point(.5,.4); element.RenderTransform=transforms;
         DoubleAnimation Tween(double from,double to)=>new(from,to,duration){EasingFunction=easing,FillBehavior=FillBehavior.Stop};
         element.BeginAnimation(OpacityProperty,Tween(opening?0:.15,1));
-        move.BeginAnimation(TranslateTransform.XProperty,Tween(opening?0:20,0));
-        move.BeginAnimation(TranslateTransform.YProperty,Tween(opening?20:5,0));
-        scale.BeginAnimation(ScaleTransform.ScaleXProperty,Tween(opening ? .975 : .985,1));
-        scale.BeginAnimation(ScaleTransform.ScaleYProperty,Tween(opening ? .975 : .985,1));
+        move.BeginAnimation(TranslateTransform.XProperty,Tween(pageDirection == 0 ? (opening ? 0 : 20) : pageDirection * 48,0));
+        move.BeginAnimation(TranslateTransform.YProperty,Tween(pageDirection == 0 ? (opening ? 20 : 5) : 0,0));
+        scale.BeginAnimation(ScaleTransform.ScaleXProperty,Tween(pageDirection == 0 ? (opening ? .975 : .985) : 1,1));
+        scale.BeginAnimation(ScaleTransform.ScaleYProperty,Tween(pageDirection == 0 ? (opening ? .975 : .985) : 1,1));
     }
     private static void StopTransform(Transform transform)
     {
@@ -275,15 +275,26 @@ public partial class MainWindow : Window
     private void Page(UIElement page)
     {
         if (page == UpdatesPage) page = SettingsPage;
+        int previousIndex = PageIndex(activePage);
+        int nextIndex = PageIndex(page);
         CloseDrawer();
         Clear(); ScanPage.Visibility = ImagePage.Visibility = SetupPage.Visibility = SettingsPage.Visibility = HistoryPage.Visibility = Visibility.Collapsed;
         if (page != ImagePage) BarcodeTextInput.Clear();
         activePage = page;
-        page.Visibility = Visibility.Visible; Animate(page);
+        page.Visibility = Visibility.Visible; Animate(page, pageDirection: Math.Sign(nextIndex - previousIndex));
         if (page == HistoryPage) RefreshCustomers();
         PaintNavigation();
         PageScroll.ScrollToTop();
+        // Navigation buttons, especially the title-bar Home button, can retain
+        // keyboard focus and intercept the next scanner's first characters.
+        if (page == ScanPage)
+        {
+            FocusManager.SetFocusedElement(this, this);
+            Keyboard.Focus(this);
+            Dispatcher.BeginInvoke(() => Keyboard.Focus(this), DispatcherPriority.Input);
+        }
     }
+    private int PageIndex(UIElement? page) => page == ImagePage ? 1 : page == HistoryPage ? 2 : page == SetupPage ? 3 : page == SettingsPage || page == UpdatesPage ? 4 : 0;
     private void ScanPage_Click(object sender, RoutedEventArgs e) => Page(ScanPage);
     private void ImagePage_Click(object sender, RoutedEventArgs e) => Page(ImagePage);
     private void SetupPage_Click(object sender, RoutedEventArgs e) => Page(SetupPage);
@@ -331,7 +342,6 @@ public partial class MainWindow : Window
         DatesPanel.Margin = compact ? new Thickness(0, 20, 0, 0) : new Thickness(0);
         ResultSummary.Margin = compact ? new Thickness(0) : new Thickness(0, 0, 24, 0);
         Headline.FontSize = width < 600 ? 28 : 38;
-        ScanHero.Padding = new Thickness(width < 600 ? 19 : 32);
         LocalBadge.Visibility = width < 650 ? Visibility.Collapsed : Visibility.Visible;
     }
     private void StartupChecks_Click(object sender, RoutedEventArgs e)

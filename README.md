@@ -46,9 +46,9 @@ One thing I found interesting while building it: a scanner can send the informat
 | **Automatic clearing** | Clears results after 30 seconds, on the next scan, or when you leave the window. |
 | **Works offline** | No internet is needed to check a scan. |
 | **Built-in updates** | Check for updates, read what's new, download, and restart when you choose. |
-| **New desk design** | A top navigation bar on wide screens, a clear scan sequence, prominent result and expiration panels, and short hover and result animations. No effect runs constantly while idle. |
+| **Counter desk design** | A top navigation bar on wide screens, a compact scan page, prominent result and expiration panels, and short hover and result animations. No effect runs constantly while idle. |
 | **Four color themes** | Choose Midnight lime, Paper, Ocean, or Sand in Settings. Your choice stays on this PC. |
-| **Opening and page animations** | A short opening reveal and smooth page changes, with a setting to turn them off. |
+| **Opening and page animations** | A short opening reveal and directional left/right page changes, with a setting to turn them off. |
 | **Flexible layout** | Adjusts to small windows, laptops, large monitors, and Windows display scaling. Scroll to reach extra content on small screens. |
 | **Color-changing edges** | Green for 21+, red for under 21 or expired, and orange for manual review. Text explains each result too. |
 | **Navigation** | Use the top navigation on wide screens or open the menu with ☰ on smaller windows. Settings are behind the gear at the top right. |

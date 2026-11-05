@@ -71,7 +71,15 @@ public partial class MainWindow
         Page(SettingsPage);
         var blocked = new TextCompositionEventArgs(Keyboard.PrimaryDevice,new TextComposition(InputManager.Current,this,sample)) { RoutedEvent=TextCompositionManager.PreviewTextInputEvent };
         RaiseEvent(blocked); Check(!scan.Receiving,"Scanner capture disabled outside Scan page");
-        Page(ScanPage);
+        HomeButton.Focus();
+        HomeButton.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+        await System.Windows.Threading.Dispatcher.Yield(System.Windows.Threading.DispatcherPriority.Input);
+        Check(ScanPage.IsVisible && Keyboard.FocusedElement == this, "Home button returns keyboard focus to the scan window");
+        var firstChunk = new TextCompositionEventArgs(Keyboard.PrimaryDevice,
+            new TextComposition(InputManager.Current,this,sample[..40])) { RoutedEvent=TextCompositionManager.PreviewTextInputEvent };
+        RaiseEvent(firstChunk);
+        Check(firstChunk.Handled && scan.Receiving, "Scanner input is captured immediately after Home");
+        Clear();
         await VerifyScannerTransport(checks);
         await VerifyCompleteKeyboardCapture(checks);
     }
@@ -247,9 +255,12 @@ public partial class MainWindow
                 Check(PageHost.HasAnimatedProperties,"Opening reveal begins");
                 await Task.Delay(700);
                 Check(AtRest(PageHost),"Opening reveal ends at full opacity and zero offset");
-                Page(SetupPage); Check(SetupPage.HasAnimatedProperties,"Page transition begins");
+                Page(SetupPage); await Task.Delay(40);
+                Check(SetupPage.HasAnimatedProperties && SetupPage.RenderTransform.Value.OffsetX > 0,"Moving right enters from the right");
                 await Task.Delay(500);
                 Check(AtRest(SetupPage),"Page transition ends at rest");
+                Page(ScanPage); await Task.Delay(40);
+                Check(ScanPage.RenderTransform.Value.OffsetX < 0,"Moving left enters from the left");
                 for(int i=0;i<12;i++) Page(i%2==0?ScanPage:SettingsPage);
                 await System.Windows.Threading.Dispatcher.Yield(System.Windows.Threading.DispatcherPriority.Render);
                 await Task.Delay(650);
