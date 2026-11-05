@@ -31,6 +31,18 @@ public partial class MainWindow
         Check(((SolidColorBrush)RootLayout.Background).Color.R < 50,"Dark canvas brush updates on the live visual tree");
         saved = JsonSerializer.Deserialize<Preferences>(File.ReadAllText(settingsPath));
         Check(saved?.Theme == "Dark", "Dark theme preference saved");
+        foreach (var theme in new[] { "Ocean", "Sand" })
+        {
+            ApplyTheme(theme, true);
+            saved = JsonSerializer.Deserialize<Preferences>(File.ReadAllText(settingsPath));
+            Check(saved?.Theme == theme, theme + " theme preference saved");
+            Check(((SolidColorBrush)RootLayout.Background).Color == ((SolidColorBrush)RootLayout.Resources["Canvas"]).Color,
+                theme + " canvas refreshes immediately");
+            foreach (var surface in new[] { "Surface", "Canvas", "Inset" })
+                foreach (var ink in new[] { "Ink", "Muted" })
+                    Check(Contrast(ink, surface) >= 4.5, theme + " " + ink + "/" + surface + " contrast >= 4.5");
+            Check(Contrast("BrandText", "BrandSoft") >= 4.5, theme + " brand contrast >= 4.5");
+        }
         foreach(bool dark in new[]{false,true})
         {
             ApplyAppearance(dark,false);
@@ -154,6 +166,8 @@ public partial class MainWindow
             Check(WindowStyle==WindowStyle.None && System.Windows.Shell.WindowChrome.GetWindowChrome(this)!=null,"Native title bar replaced by integrated window chrome");
             DemoResult(21);
             Check(edgeBrush.Color==((SolidColorBrush)RootLayout.Resources["Accent"]).Color,"Exactly 21 uses green window edges");
+            Check(ExpiryCountdownBorder.Visibility == Visibility.Visible && ExpiryCountdownLabel.Text.Contains("until expiration", StringComparison.Ordinal),
+                "Valid scan shows days left before expiration");
             Check(NameLabel.Text=="ALEX SAMPLE" && CopyNameButton.IsEnabled,"First and last name displayed in uppercase");
             CopyName_Click(this,new RoutedEventArgs()); Check(copied=="ALEX SAMPLE","Name copy contains first and last only");
             Check(history.Entries.Count==1 && history.Entries[0].Demo,"Demo history entry is explicitly marked");
@@ -164,6 +178,8 @@ public partial class MainWindow
             Check(edgeBrush.Color==((SolidColorBrush)RootLayout.Resources["Danger"]).Color,"Under 21 uses red window edges");
             Check(history.Entries.Count==2 && history.Entries[0].Name=="JAMIE EXAMPLE","Both scans appear separately in session history");
             DemoResult(30,true); Check(edgeBrush.Color==((SolidColorBrush)RootLayout.Resources["Danger"]).Color,"Expired ID uses red window edges");
+            Check(ExpiryCountdownBorder.Visibility == Visibility.Visible && ExpiryCountdownLabel.Text.StartsWith("Expired ", StringComparison.Ordinal),
+                "Expired scan shows days since expiration");
             RecoveryDemo_Click(this,new RoutedEventArgs()); int before=history.Entries.Count;
             Check(edgeBrush.Color==((SolidColorBrush)RootLayout.Resources["WarmInk"]).Color,"Review uses orange window edges");
             ConfirmDates_Click(this,new RoutedEventArgs());

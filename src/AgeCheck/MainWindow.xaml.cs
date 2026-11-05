@@ -34,6 +34,7 @@ public partial class MainWindow : Window
     private CheckResult? recoveredDates;
     private bool recoveryDemo;
     private bool darkTheme = true;
+    private string selectedTheme = "Dark";
     private bool motionEnabled = true;
     private CheckResult? visibleResult;
     private string? currentRawBarcode;
@@ -77,7 +78,8 @@ public partial class MainWindow : Window
             {
                 var prefs = JsonSerializer.Deserialize<Preferences>(File.ReadAllText(settingsPath));
                 StartupChecks.IsChecked = prefs?.StartupChecks ?? true;
-                darkTheme = prefs?.Theme != "Light";
+                selectedTheme = prefs?.Theme is "Dark" or "Light" or "Ocean" or "Sand" ? prefs.Theme : "Dark";
+                darkTheme = Theme.IsDark(selectedTheme);
                 motionEnabled = prefs?.Animations ?? true;
                 history.SetEnabled(prefs?.SessionHistory ?? true);
                 rememberCustomers = prefs?.RememberCustomers ?? true;
@@ -91,7 +93,7 @@ public partial class MainWindow : Window
         UpdateHistoryUI();
         RefreshCustomers();
         WindowFrame.BorderBrush = edgeBrush;
-        activePage = ScanPage; ApplyAppearance(darkTheme, false);
+        activePage = ScanPage; ApplyTheme(selectedTheme, false);
         SourceInitialized += (_, _) => Theme.TitleBar(this, darkTheme);
         quiet.Tick += async (_, _) => await FinishScan();
         deadline.Tick += (_, _) => { string partial = scan.Snapshot(); Clear(); inputBlocked = true; ShowResult(new(Outcome.Review, "Scan exceeded 20 seconds. Clear and rescan."), false, partial); };
@@ -156,6 +158,7 @@ public partial class MainWindow : Window
         if (processing) { quiet.Start(); return; }
         processing = true; int generation = scanGeneration, revision = inputRevision;
         Phase.Text = "PROCESSING"; Headline.Text = "Checking dates…";
+        ScanMotionLabel.Text = "Checking barcode fields and dates";
         string raw = scan.Snapshot();
         var result = await Task.Run(() => Barcode.Check(raw, Today, allowScannerRecovery: true));
         processing = false;
@@ -188,7 +191,7 @@ public partial class MainWindow : Window
         ResultSubtitle.Text = "The next card starts a fresh check.";
         Detail.Text = "Scan the large barcode on the back of the ID. Keep this window active.";
         BirthLabel.Text = ExpiryLabel.Text = "—"; DemoBadge.Visibility = Visibility.Collapsed;
-        ExpiryCountdownLabel.Text = ""; UpdateStateBadge(null);
+        ExpiryCountdownLabel.Text = ""; ExpiryCountdownBorder.Visibility = Visibility.Collapsed; UpdateStateBadge(null);
         NamePanel.Visibility = Visibility.Collapsed; NameLabel.Text = "NAME NOT AVAILABLE"; CopyNameButton.IsEnabled = false;
         NameCopyStatus.Text = "Compare the printed name before copying.";
         HistoryCopyStatus.Text = "";
@@ -232,6 +235,15 @@ public partial class MainWindow : Window
         BirthLabel.Text = result.Birth?.ToString("MMM dd, yyyy", System.Globalization.CultureInfo.InvariantCulture) ?? "—";
         ExpiryLabel.Text = result.Expiration?.ToString("MMM dd, yyyy", System.Globalization.CultureInfo.InvariantCulture) ?? "—";
         ExpiryCountdownLabel.Text = ExpirationCountdown.Describe(result.Expiration, Today, result.Outcome != Outcome.Review);
+        ExpiryCountdownBorder.Visibility = result.Expiration is null ? Visibility.Collapsed : Visibility.Visible;
+        ExpiryCountdownBorder.SetResourceReference(BackgroundProperty, result.Outcome switch
+        {
+            Outcome.Expired => "DangerSoft", Outcome.Review => "Warm", _ => "AccentSoft"
+        });
+        ExpiryCountdownLabel.SetResourceReference(System.Windows.Controls.TextBlock.ForegroundProperty, result.Outcome switch
+        {
+            Outcome.Expired => "Danger", Outcome.Review => "WarmInk", _ => "AccentText"
+        });
         UpdateStateBadge(result.IssuingState);
         Animate(ResultCard); privacy.Stop(); privacy.Start();
     }
@@ -306,19 +318,20 @@ public partial class MainWindow : Window
     private void AdaptLayout(double width)
     {
         bool compact = width < 800;
-        bool showRail = width >= 1050;
-        RailColumn.Width = new GridLength(showRail ? 220 : 0);
-        NavigationRail.Visibility = showRail ? Visibility.Visible : Visibility.Collapsed;
-        MenuButton.Visibility = showRail ? Visibility.Collapsed : Visibility.Visible;
+        RailColumn.Width = new GridLength(0);
+        NavigationRail.Visibility = Visibility.Collapsed;
+        TopNavigation.Visibility = width >= 930 ? Visibility.Visible : Visibility.Collapsed;
+        MenuButton.Visibility = width < 930 ? Visibility.Visible : Visibility.Collapsed;
         BrandWordmark.Visibility = width < 600 ? Visibility.Collapsed : Visibility.Visible;
-        PageHost.Margin = new Thickness(width < 600 ? 16 : 32, 22, width < 600 ? 16 : 32, 22);
+        PageHost.Margin = new Thickness(width < 600 ? 16 : 32, 26, width < 600 ? 16 : 32, 26);
         ResultCard.Padding = new Thickness(width < 600 ? 18 : 26);
         ResultDatesColumn.Width = compact ? new GridLength(0) : new GridLength(280);
         System.Windows.Controls.Grid.SetColumn(DatesPanel, compact ? 0 : 1);
         System.Windows.Controls.Grid.SetRow(DatesPanel, compact ? 1 : 0);
         DatesPanel.Margin = compact ? new Thickness(0, 20, 0, 0) : new Thickness(0);
         ResultSummary.Margin = compact ? new Thickness(0) : new Thickness(0, 0, 24, 0);
-        Headline.FontSize = width < 600 ? 28 : 34;
+        Headline.FontSize = width < 600 ? 28 : 38;
+        ScanHero.Padding = new Thickness(width < 600 ? 19 : 32);
         LocalBadge.Visibility = width < 650 ? Visibility.Collapsed : Visibility.Visible;
     }
     private void StartupChecks_Click(object sender, RoutedEventArgs e)
@@ -330,25 +343,28 @@ public partial class MainWindow : Window
         try
         {
             Directory.CreateDirectory(Path.GetDirectoryName(settingsPath)!);
-            File.WriteAllText(settingsPath, JsonSerializer.Serialize(new Preferences(StartupChecks.IsChecked == true, darkTheme ? "Dark" : "Light", motionEnabled, history.Enabled, rememberCustomers)));
+            File.WriteAllText(settingsPath, JsonSerializer.Serialize(new Preferences(StartupChecks.IsChecked == true, selectedTheme, motionEnabled, history.Enabled, rememberCustomers)));
             SettingsStatus.Text = "Preferences saved on this PC. Customer recognition and session history have separate controls.";
         }
         catch { SettingsStatus.Text = "Could not save preferences. They still apply for this session."; UpdateStatus.Text = "Could not save preferences. They still apply for this session."; }
     }
-    private void ApplyAppearance(bool dark, bool save)
+    private void ApplyAppearance(bool dark, bool save) => ApplyTheme(dark ? "Dark" : "Light", save);
+    private void ApplyTheme(string theme, bool save)
     {
-        darkTheme = dark; Theme.Apply(dark, RootLayout);
-        Theme.TitleBar(this, dark);
+        selectedTheme = theme is "Dark" or "Light" or "Ocean" or "Sand" ? theme : "Dark";
+        darkTheme = Theme.IsDark(selectedTheme); Theme.Apply(selectedTheme, RootLayout);
+        Theme.TitleBar(this, darkTheme);
         PaintNavigation(); PaintStatus(visibleResult?.Outcome);
-        LightThemeButton.SetResourceReference(BackgroundProperty, dark ? "Quiet" : "Accent");
-        LightThemeButton.SetResourceReference(ForegroundProperty, dark ? "Ink" : "AccentInk");
-        DarkThemeButton.SetResourceReference(BackgroundProperty, dark ? "Accent" : "Quiet");
-        DarkThemeButton.SetResourceReference(ForegroundProperty, dark ? "AccentInk" : "Ink");
+        foreach (var (button, name) in new[] { (DarkThemeButton, "Dark"), (LightThemeButton, "Light"), (OceanThemeButton, "Ocean"), (SandThemeButton, "Sand") })
+        {
+            button.SetResourceReference(BackgroundProperty, selectedTheme == name ? "Accent" : "Quiet");
+            button.SetResourceReference(ForegroundProperty, selectedTheme == name ? "AccentInk" : "Ink");
+        }
         if (save) SavePreferences();
     }
     private void PaintNavigation()
     {
-        foreach (var (button,page) in new[] { (ScanNav, ScanPage), (ImageNav, ImagePage), (HistoryNav, HistoryPage), (SetupNav, SetupPage), (SettingsDrawerNav, SettingsPage), (SettingsNav, SettingsPage), (RailScan, ScanPage), (RailImage, ImagePage), (RailHistory, HistoryPage), (RailSetup, SetupPage), (RailSettings, SettingsPage) })
+        foreach (var (button,page) in new[] { (ScanNav, ScanPage), (ImageNav, ImagePage), (HistoryNav, HistoryPage), (SetupNav, SetupPage), (SettingsDrawerNav, SettingsPage), (SettingsNav, SettingsPage), (RailScan, ScanPage), (RailImage, ImagePage), (RailHistory, HistoryPage), (RailSetup, SetupPage), (RailSettings, SettingsPage), (TopScan, ScanPage), (TopImage, ImagePage), (TopHistory, HistoryPage), (TopSetup, SetupPage), (TopSettings, SettingsPage) })
         {
             button.SetResourceReference(BackgroundProperty, page == activePage ? "AccentSoft" : "Surface");
             button.SetResourceReference(ForegroundProperty, page == activePage ? "AccentText" : "Muted");
@@ -367,6 +383,8 @@ public partial class MainWindow : Window
     }
     private void LightTheme_Click(object sender, RoutedEventArgs e) => ApplyAppearance(false, true);
     private void DarkTheme_Click(object sender, RoutedEventArgs e) => ApplyAppearance(true, true);
+    private void OceanTheme_Click(object sender, RoutedEventArgs e) => ApplyTheme("Ocean", true);
+    private void SandTheme_Click(object sender, RoutedEventArgs e) => ApplyTheme("Sand", true);
     private void MotionEnabled_Click(object sender, RoutedEventArgs e)
     {
         motionEnabled = MotionEnabled.IsChecked == true;
@@ -421,8 +439,9 @@ public partial class MainWindow : Window
         // Explicit developer-only export: synthetic demonstrations, never real scan data.
         Directory.CreateDirectory("artifacts/screenshots");
         ((System.Windows.Controls.Panel)Content).Background = Background;
-        foreach (string state in new[] { "ready", "passed", "under21", "expired", "review", "image", "setup", "updates" })
+        foreach (string state in new[] { "ready", "passed", "under21", "expired", "review", "image", "history", "settings", "light", "setup", "updates" })
         {
+            ApplyTheme("Dark", false);
             Page(ScanPage);
             switch (state)
             {
@@ -431,6 +450,9 @@ public partial class MainWindow : Window
                 case "expired": DemoResult(30, true); break;
                 case "review": ShowResult(new(Outcome.Review, "Incomplete barcode. Check scanner settings and rescan."), true); break;
                 case "image": Page(ImagePage); break;
+                case "history": DemoResult(25); Page(HistoryPage); break;
+                case "settings": Page(SettingsPage); break;
+                case "light": ApplyTheme("Light", false); DemoResult(25); break;
                 case "setup": Page(SetupPage); break;
                 case "updates": Page(UpdatesPage); break;
             }

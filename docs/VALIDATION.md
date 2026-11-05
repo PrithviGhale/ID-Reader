@@ -1,5 +1,12 @@
 # Validation record
 
+## Version 1.7.0 counter redesign (November 5, 2026)
+
+- Release build and full packaging succeeded with zero build warnings or errors; all 201 core tests passed and the editor probe generated all 133 named controls.
+- The packaged WPF self-test passed scanner input, age outcomes, expiration countdown display, four theme persistence and contrast checks, privacy clearing, and a five-second idle sample. The idle sample measured 15.6 ms CPU time and 289.8 MiB working set on this machine; this is a short measurement, not a performance guarantee.
+- Narrow and wide layout checks passed across the app's screens after fixing heading overflow. Packaged motion checks passed opening, tab changes, menu transitions, and reduced-motion behavior. Screenshots use synthetic demo data.
+- The user should still check the updated layout and real scanner input on the business PC. Barcode checks do not authenticate a physical card.
+
 ## Version 1.2.0 age, birthdays, recognition and Settings (October 22, 2026)
 
 - **170 automated core cases pass**, including the existing scanner suite. New calendar checks cover exact age boundaries, birthday today, year rollover, leap-day anniversaries and days until 21. Recognition tests cover same-name/different-card records, bounded capacity, reopening the book and excluding transient identity data from JSON/history.

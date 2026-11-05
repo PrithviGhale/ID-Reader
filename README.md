@@ -46,12 +46,12 @@ One thing I found interesting while building it: a scanner can send the informat
 | **Automatic clearing** | Clears results after 30 seconds, on the next scan, or when you leave the window. |
 | **Works offline** | No internet is needed to check a scan. |
 | **Built-in updates** | Check for updates, read what's new, download, and restart when you choose. |
-| **New desk design** | A side navigation rail on wide screens, clear scan status, updated icons, and short hover and result animations. No effect runs constantly while idle. |
-| **Light and dark modes** | Choose your preferred look in Settings. Your choice stays on this PC. |
+| **New desk design** | A top navigation bar on wide screens, a clear scan sequence, prominent result and expiration panels, and short hover and result animations. No effect runs constantly while idle. |
+| **Four color themes** | Choose Midnight lime, Paper, Ocean, or Sand in Settings. Your choice stays on this PC. |
 | **Opening and page animations** | A short opening reveal and smooth page changes, with a setting to turn them off. |
 | **Flexible layout** | Adjusts to small windows, laptops, large monitors, and Windows display scaling. Scroll to reach extra content on small screens. |
 | **Color-changing edges** | Green for 21+, red for under 21 or expired, and orange for manual review. Text explains each result too. |
-| **Navigation** | Use the left rail on wide screens or open the menu with ☰ on smaller windows. Settings are behind the gear at the top right. |
+| **Navigation** | Use the top navigation on wide screens or open the menu with ☰ on smaller windows. Settings are behind the gear at the top right. |
 | **Demo mode** | Try made-up examples without scanning an ID. Each demo is clearly marked. |
 
 ## Get started
@@ -69,7 +69,7 @@ Image Scanner also tries a high-contrast pass on small regions. Some photos stil
 1. **[Open the latest release](https://github.com/PrithviGhale/ID-Reader/releases/latest)** and download **`AgeCheck-win-x64-Setup.exe`**.
 2. Run the installer. Everything the app needs is included.
 3. Follow the **[scanner setup guide](docs/SCANNER_SETUP.md)**.
-4. Open **Scan cards** from the left rail or ☰ menu, keep the window active, and scan the barcode on the back of the card.
+4. Open **Scan desk** from the top navigation or ☰ menu, keep the window active, and scan the barcode on the back of the card.
 5. Compare the result with the printed card and the customer. **Just scan the next card** for the next customer; no Next button is needed. Clear result is optional.
 
 **Already using version 1.0.0?** Close and uninstall that version, then install the latest AgeCheck Setup. This one-time reinstall removes the old publisher and installation name. Versions 1.0.1 and newer can update inside the app. Session history is never migrated or saved across restarts.
@@ -104,16 +104,16 @@ This is a **date-only check**. Missing separators mean the app cannot prove the 
 
 </details>
 
-## Light or dark. Your choice.
+## Choose your theme.
 
-Open the **gear at the top right** and choose **Light** or **Dark**. You can also turn animations or session history off. Preferences save automatically. Opening and page changes use brief zoom-and-slide animations and respect the Windows animation setting.
+Open the **gear at the top right** and choose **Midnight lime**, **Paper**, **Ocean**, or **Sand**. You can also turn animations or session history off. Preferences save automatically. Opening and page changes use brief transitions and respect the Windows animation setting.
 
-![AgeCheck in light mode](docs/images/light.png)
+![AgeCheck in Paper theme](docs/images/light.png)
 
 <details>
 <summary>See appearance and animation settings</summary>
 
-![AgeCheck settings with dark mode and animation controls](docs/images/settings.png)
+![AgeCheck settings with four color themes and animation controls](docs/images/settings.png)
 
 </details>
 

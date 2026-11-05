@@ -3,7 +3,6 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
-using System.Windows.Media.Effects;
 
 namespace AgeCheck;
 
@@ -32,11 +31,6 @@ public partial class MainWindow
     private void HoverButton(Button button, bool entered)
     {
         if (!button.IsEnabled) return;
-        button.Effect = entered ? new DropShadowEffect
-        {
-            Color = darkTheme ? Color.FromRgb(83, 211, 222) : Color.FromRgb(16, 123, 170),
-            BlurRadius = 17, ShadowDepth = 0, Opacity = .28
-        } : null;
         if (button.RenderTransform is not ScaleTransform scale)
         {
             scale = new ScaleTransform(1, 1);
@@ -59,8 +53,12 @@ public partial class MainWindow
 
     private void StartScanBeam()
     {
+        ScanMotionLabel.Text = "Receiving barcode";
+        ScanMotionPanel.Visibility = Visibility.Visible;
         ScanBeam.Visibility = Visibility.Visible;
         if (suppressAnimations || !motionEnabled || !SystemParameters.ClientAreaAnimation) return;
+        ScanMotionPulse.BeginAnimation(OpacityProperty, new DoubleAnimation(.35, 1, TimeSpan.FromMilliseconds(420))
+        { AutoReverse = true, RepeatBehavior = RepeatBehavior.Forever });
         var move = new TranslateTransform();
         ScanBeam.RenderTransform = move;
         move.BeginAnimation(TranslateTransform.XProperty, new DoubleAnimation(0, Math.Max(80, ResultCard.ActualWidth - 190),
@@ -69,6 +67,9 @@ public partial class MainWindow
 
     private void StopScanBeam()
     {
+        ScanMotionPulse.BeginAnimation(OpacityProperty, null);
+        ScanMotionPulse.Opacity = 1;
+        ScanMotionPanel.Visibility = Visibility.Collapsed;
         if (ScanBeam.RenderTransform is TranslateTransform move) move.BeginAnimation(TranslateTransform.XProperty, null);
         ScanBeam.RenderTransform = Transform.Identity;
         ScanBeam.Visibility = Visibility.Collapsed;
